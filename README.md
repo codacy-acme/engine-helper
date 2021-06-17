@@ -1,6 +1,6 @@
 # engine-helper
 
-An helper to enable, disable or chose configuration files for Codacy engines
+An helper to enable, disable or chose to use or not configuration files for Codacy engines
 
 
 ## Usage
@@ -12,11 +12,11 @@ The requirements.txt list all Python libraries that should be installed before e
     pip install -r requirements.txt
 
 arguments:
-  -h, --help            show this help message and exit
-  --token TOKEN         the api-token to be used on the REST API
-  --action {enableengine,disableengine,listengines,useconfigurationfile,dontuseconfigurationfile} action to take
-  --which WHICH         repository to be updated, none means all
-  --provider PROVIDER   git provider
-  --organization ORGANIZATION   organization id
-  --engine ENGINE       engine id
-  --baseurl BASEURL     codacy server address (ignore if cloud)
+    -h, --help            show this help message and exit
+    --token TOKEN         the api-token to be used on the REST API
+    --action {enableengine,disableengine,listengines,useconfigurationfile,dontuseconfigurationfile} action to take
+    --which WHICH         repository to be updated, none means all
+    --provider PROVIDER   git provider
+    --organization ORGANIZATION   organization id
+    --engine ENGINE       engine id
+    --baseurl BASEURL     codacy server address (ignore if cloud)
