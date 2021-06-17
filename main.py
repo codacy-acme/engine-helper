@@ -46,7 +46,7 @@ def setUseConfigurationFileForAll(baseurl, provider, organizationId, engineId, u
     repositories = listRepositories(baseurl, provider, organizationId, token)
     for repo in repositories:
         setUseConfigurationFile(baseurl,repo['repositoryId'],engineId, use)
-    return 
+    return
 
 def setUseConfigurationFile(baseurl, repoId, engineId, use):
     headers = {
@@ -122,5 +122,5 @@ def main():
             setToolStatusForAll(args.baseurl, args.provider, args.organization, args.engine, args.action == 'enableengine', args.token)
         else:
             setToolStatus(args.baseurl, args.which, args.engine, args.action == 'enableengine')
-        
+
 main()
