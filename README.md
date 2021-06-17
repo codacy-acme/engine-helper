@@ -1,6 +1,6 @@
 # engine-helper
 
-An helper to enable, disable or chose to use or not configuration files for Codacy engines
+An helper to enable, disable or choose to use or not configuration files for Codacy engines
 
 
 ## Usage
