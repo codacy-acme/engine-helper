@@ -24,3 +24,23 @@ arguments:
     --engine ENGINE       engine id
     --baseurl BASEURL     codacy server address (ignore if cloud)
 ```
+
+## Enable Security only Patterns (only for on-prem)
+
+### Create patterns.json file
+```
+psql -U codacy -h {host} -d postgres
+\c analysis
+\t on
+\pset format unaligned
+with t as (select "id", "internalId" from "Pattern")
+select json_agg(t) from t \g patterns.json
+\q
+```
+
+### Execution
+
+```bash
+python3 main.py --action securityonly --baseurl https://yourserveraddress --token {token} --provider {git-provider} --organization {organization} --which {repoId}
+```
+Flag --which is optional. If missing, will be for all repositories.
