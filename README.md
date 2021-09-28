@@ -10,7 +10,7 @@ Create a file named auth.cookie and dump inside it the value of your Codacy cook
 The `requirements.txt` lists all Python libraries that should be installed before running the script:
 
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ```text
@@ -43,4 +43,14 @@ select json_agg(t) from t \g patterns.json
 ```bash
 python3 main.py --action securityonly --baseurl https://yourserveraddress --token {token} --provider {git-provider} --organization {organization} --which {repoId}
 ```
+Flag --which is optional. If missing, will be for all repositories.
+
+## Remove current integration and add for a specific account
+
+### Execution
+
+```bash
+python3 reintegrator.py --token {token} --provider {git-provider} --organization {organization} --which {repoId}
+```
+
 Flag --which is optional. If missing, will be for all repositories.
