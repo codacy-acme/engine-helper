@@ -19,9 +19,33 @@ logging.getLogger().setLevel(logging.DEBUG)
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
+def getSecurityPatternsForRepo(baseurl, provider, org, repoName):
+    available_tools = findToolsForRepo(baseurl, provider, org, repoName)
+    available_patterns = []
 
-def findEnginesForRepo(baseurl, provider, org, repoName):
-    url = '%s/%s/%s/%s/patterns/list'%(baseurl, provider, org, repoName)
+    for tool in available_tools:
+        authority = re.sub('http[s]{0,1}://','',baseurl)
+        headers = {
+            'authority': authority,
+            'x-requested-with': 'XMLHttpRequest',
+            'cookie': readCookieFile(),
+            'Content-Type': 'application/json'
+        }
+        response = requests.get(baseurl + tool['url'], headers=headers)
+        page = BeautifulSoup(response.text, 'html.parser')
+        pattern_items = page.find_all(class_='pattern-item')
+        
+        for item in pattern_items:
+            category = item.find(class_='pattern-category').get_text() if item.find(class_='pattern-category') else ''
+            if category == 'Security':
+                name = item.find(class_='pattern-header').h5.get_text().strip()
+                enabled = 'checked' in item.input.attrs if item.input != None else False
+                available_patterns.append({"tool": tool['name'], "name": name, "enabled": enabled})
+
+    return available_patterns
+
+def findToolsForRepo(baseurl, provider, org, repoName):
+    repo_url = '%s/%s/%s/%s/patterns/list'%(baseurl, provider, org, repoName)
     authority = re.sub('http[s]{0,1}://','',baseurl)
     headers = {
         'authority': authority,
@@ -29,7 +53,7 @@ def findEnginesForRepo(baseurl, provider, org, repoName):
         'cookie': readCookieFile(),
         'Content-Type': 'application/json'
     }
-    response = requests.get(url, headers=headers)
+    response = requests.get(repo_url, headers=headers)
     html_doc = response.text
     soup = BeautifulSoup(html_doc, 'html.parser')
     tools_panel = soup.find(id='tools-panel')
@@ -38,12 +62,18 @@ def findEnginesForRepo(baseurl, provider, org, repoName):
     available_tools = []
     for item in list_items:
         name = item.find(class_='tool').get_text().split('\n')[0].strip()
-        url = item.a.get('href') if item.a != None else None
+        tool_url = item.a.get('href') if item.a != None else findDefaultToolURL(item)
         enabled = 'checked' in item.input.attrs if item.input != None else False
-        available_tools.append({'name': name, 'url': url, 'enabled': enabled})
+        available_tools.append({'name': name, 'url': tool_url, 'enabled': enabled})
 
-    for tool in available_tools:
-        print(tool)
+    return available_tools
+
+def findDefaultToolURL(tool_item):
+    data_url = tool_item.input.get('data-url')
+    repo_id = data_url.split('/')[1]
+    tool_id = data_url.split('/')[3]
+    print('/p/%s/patterns/list?engine=%s'%(repo_id, tool_id))
+    return '/p/%s/patterns/list?engine=%s'%(repo_id, tool_id)
 
 # TODO: paginate instead of requesting 10000 repos
 def listRepositories(baseurl, provider, organization, token):
@@ -83,8 +113,11 @@ def main():
                         help='codacy server address (ignore if cloud)')
     args = parser.parse_args()
 
-    findEnginesForRepo(args.baseurl, args.provider, args.organization, 'monorepo')
-    print("Done!")
+    report = getSecurityPatternsForRepo(args.baseurl, args.provider, args.organization, args.which)
 
+    for pattern in report:
+        print(pattern)
+
+    # findToolsForRepo(args.baseurl, args.provider, args.organization, args.which)
 
 main()
