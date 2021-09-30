@@ -47,6 +47,10 @@ Flag --which is optional. If missing, will be for all repositories.
 
 ## Remove current integration and add for a specific account
 
+This script should be used if you are looking to set set-up a service account or similar.
+The script will open some tabs on the browser in order to enable the integration.
+Currently works on Codacy Cloud. On-prem will be available in the next release (>4.3.0)
+
 ### Execution
 
 ```bash
