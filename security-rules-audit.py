@@ -3,6 +3,7 @@ import argparse
 import requests
 from bs4 import BeautifulSoup
 import json
+import csv
 import re
 import logging
 
@@ -19,11 +20,19 @@ logging.getLogger().setLevel(logging.DEBUG)
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
-def getSecurityPatternsForRepo(baseurl, provider, org, repoName):
-    available_tools = findToolsForRepo(baseurl, provider, org, repoName)
-    available_patterns = []
+def listSecurityPatternsForOrg(baseurl, provider, org, token):
+    repos = listRepositories(baseurl, provider, org, token)
+    patterns_by_repo = []
+    for repo in repos:
+        repo_patterns = listSecurityPatternsForRepo(baseurl, provider, org, repo['name'])
+        patterns_by_repo.append({'repository': repo['name'], 'patterns': repo_patterns})
+    return patterns_by_repo
+
+def listSecurityPatternsForRepo(baseurl, provider, org, repoName):
+    available_tools = listToolsForRepo(baseurl, provider, org, repoName)
 
     for tool in available_tools:
+        available_patterns = []
         authority = re.sub('http[s]{0,1}://','',baseurl)
         headers = {
             'authority': authority,
@@ -40,11 +49,12 @@ def getSecurityPatternsForRepo(baseurl, provider, org, repoName):
             if category == 'Security':
                 name = item.find(class_='pattern-header').h5.get_text().strip()
                 enabled = 'checked' in item.input.attrs if item.input != None else False
-                available_patterns.append({"tool": tool['name'], "name": name, "enabled": enabled})
+                available_patterns.append({ "name": name, "enabled": enabled })
+        tool['patterns'] = available_patterns
 
-    return available_patterns
+    return available_tools
 
-def findToolsForRepo(baseurl, provider, org, repoName):
+def listToolsForRepo(baseurl, provider, org, repoName):
     repo_url = '%s/%s/%s/%s/patterns/list'%(baseurl, provider, org, repoName)
     authority = re.sub('http[s]{0,1}://','',baseurl)
     headers = {
@@ -75,7 +85,6 @@ def findDefaultToolURL(tool_item):
     print('/p/%s/patterns/list?engine=%s'%(repo_id, tool_id))
     return '/p/%s/patterns/list?engine=%s'%(repo_id, tool_id)
 
-# TODO: paginate instead of requesting 10000 repos
 def listRepositories(baseurl, provider, organization, token):
     if token == None:
         raise Exception('api-token needs to be defined')
@@ -85,17 +94,21 @@ def listRepositories(baseurl, provider, organization, token):
     }
     url = '%s/api/v3/organizations/%s/%s/repositories?limit=10000' % (
         baseurl, provider, organization)
-    print(url)
     r = requests.get(url, headers=headers)
     repositories = json.loads(r.text)
-    for repository in repositories['data']:
-        print('[%s] %s' % (repository['repositoryId'], repository['name']))
     return repositories['data']
 
 def readCookieFile():
     with open("auth.cookie", "r") as myfile:
         data = myfile.read().replace('\n', '')
         return data
+
+def buildCSVReport(org, patterns_by_repo):
+    with open('security_pattern_report.csv', 'w', newline='') as csvfile:
+        fieldnames = ['repository', 'tool', 'tool_is_enabled', 'pattern_name', 'pattern_is_enabled']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(report)
 
 
 def main():
@@ -113,10 +126,14 @@ def main():
                         help='codacy server address (ignore if cloud)')
     args = parser.parse_args()
 
-    report = getSecurityPatternsForRepo(args.baseurl, args.provider, args.organization, args.which)
+    org_patterns = listSecurityPatternsForOrg(args.baseurl, args.provider, args.organization, args.token)
+    with open('patterns.json', 'w', newline='') as jsonfile:
+        json.dump(org_patterns, jsonfile)
 
-    for pattern in report:
-        print(pattern)
+    # buildCSVReport(org_patterns)
+    # report = getSecurityPatternsForRepo(args.baseurl, args.provider, args.organization, args.which)
+    # for pattern in report:
+    #     print(pattern)
 
     # findToolsForRepo(args.baseurl, args.provider, args.organization, args.which)
 
