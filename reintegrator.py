@@ -86,10 +86,10 @@ def deleteIntegration(baseurl, repoId, integrationId):
 
 def enableIntegration(baseurl, repoId, provider):
     url = '%s/add/addService/redirect/%s/%s' % (baseurl, provider, repoId)
-    print(url)
-    chrome_path = 'open -a /Applications/Google\ Chrome.app %s'
-    webbrowser.get(chrome_path).open(url, new=2)
-    #webbrowser.open(url, new=2)
+    #print(url)
+    #chrome_path = 'open -a /Applications/Google\ Chrome.app %s'
+    #webbrowser.get(chrome_path).open(url, new=2)
+    webbrowser.open(url, new=2)
     # sleep for browser time
     time.sleep(1)
 
