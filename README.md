@@ -49,12 +49,12 @@ Flag --which is optional. If missing, will be for all repositories.
 
 This script should be used if you are looking to set set-up a service account or similar.
 The script will open some tabs on the browser in order to enable the integration.
-Currently works on Codacy Cloud. On-prem will be available in the next release (>4.3.0)
+Currently works on Codacy Cloud. On-prem will be available in the next release (>= 4.4.0)
 
 ### Execution
 
 ```bash
-python3 reintegrator.py --token {token} --provider {git-provider} --organization {organization} --which {repoId} --baseurl {baseurl (optional)}
+python3 reintegrator.py --token {token} --provider {git-provider} --organization {organization} --which {reponame (optional)} --repoid {repoid (optional)} --baseurl {baseurl (optional)}
 ```
 
 Flag --which is optional. If missing, will be for all repositories.

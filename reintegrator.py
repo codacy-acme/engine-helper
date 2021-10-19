@@ -16,8 +16,9 @@ providers = {
     'gle': 'GitLabEnterprise',
     'bbe': 'Stash'
 
-    
+
 }
+
 
 def readCookieFile():
     with open('auth.cookie', 'r') as myfile:
@@ -25,16 +26,17 @@ def readCookieFile():
         return data
 
 
-#integration-github
-#integration-gitlab
-#integration-bitbucket
-#integration-github-enterprise
-#integration-gitlab-enterprise
-#integration-stash
+# integration-github
+# integration-gitlab
+# integration-bitbucket
+# integration-github-enterprise
+# integration-gitlab-enterprise
+# integration-stash
 
-def findIntegrationId(baseurl, repoId):
-    url = '%s/p/%s/settings/integrations'%(baseurl, repoId)
-    authority = re.sub('http[s]{0,1}://','',baseurl)
+def findIntegrationId(baseurl, provider, org, repo):
+    #url = '%s/p/%s/settings/integrations' % (baseurl, repoId)
+    url = '%s/%s/%s/%s/settings/integrations' % (baseurl, provider, org, repo)
+    authority = re.sub('http[s]{0,1}://', '', baseurl)
     headers = {
         'authority': authority,
         'x-requested-with': 'XMLHttpRequest',
@@ -45,28 +47,31 @@ def findIntegrationId(baseurl, repoId):
     html_doc = response.text
     soup = BeautifulSoup(html_doc, 'html.parser')
     integrations_view = soup.find(id='IntegrationsView')
-    gp_integration = integrations_view.find(class_=re.compile('integration-(github|gitlab|bitbucket|github-enterprise|gitlab-enterprise|stash)'))
+    gp_integration = integrations_view.find(class_=re.compile(
+        'integration-(github|gitlab|bitbucket|github-enterprise|gitlab-enterprise|stash)'))
     if(gp_integration == None):
         return -1
     else:
-        return gp_integration.get('id').replace('notification-','')
+        return gp_integration.get('id').replace('notification-', '')
 
 
 def addIntegration(baseurl, repoId, provider):
-    authority = re.sub('http[s]{0,1}://','',baseurl)
+    authority = re.sub('http[s]{0,1}://', '', baseurl)
     headers = {
         'authority': authority,
         'x-requested-with': 'XMLHttpRequest',
         'cookie': readCookieFile(),
         'Content-Type': 'application/json'
     }
-    url = '%s/integrations/create/%s/%s' % (baseurl, repoId, provider)
+    url = '%s/integrations/create/%s/%s' % (baseurl,
+                                            repoId, providers[provider])
     data = '{}'
     response = requests.post(url, headers=headers, data=data)
     print(response)
 
+
 def deleteIntegration(baseurl, repoId, integrationId):
-    authority = re.sub('http[s]{0,1}://','',baseurl)
+    authority = re.sub('http[s]{0,1}://', '', baseurl)
     headers = {
         'authority': authority,
         'x-requested-with': 'XMLHttpRequest',
@@ -78,32 +83,37 @@ def deleteIntegration(baseurl, repoId, integrationId):
     response = requests.post(url, headers=headers, data=data)
     print(response)
 
+
 def enableIntegration(baseurl, repoId, provider):
     url = '%s/add/addService/redirect/%s/%s' % (baseurl, provider, repoId)
     print(url)
-    #chrome_path = 'open -a /Applications/Google\ Chrome.app %s'
-    #webbrowser.get(chrome_path).open(url, new=2)
-    webbrowser.open(url, new=2)
+    chrome_path = 'open -a /Applications/Google\ Chrome.app %s'
+    webbrowser.get(chrome_path).open(url, new=2)
+    #webbrowser.open(url, new=2)
     # sleep for browser time
     time.sleep(1)
 
 
-def reintegrate(baseurl, repoId, provider):
-    integrationId = findIntegrationId(baseurl, repoId)
+def reintegrate(baseurl, provider, organization, repository, repoId):
+    integrationId = findIntegrationId(
+        baseurl, provider, organization, repository)
     if integrationId != -1:
         deleteIntegration(baseurl, repoId, integrationId)
     addIntegration(baseurl, repoId, provider)
-    if(provider == 'GitHub'):
+    if(provider == 'gh'):
         providerEnable = 'GithubReadOnly'
     else:
-        providerEnable = provider
+        providerEnable = providers[provider]
     enableIntegration(baseurl, repoId, providerEnable)
+
 
 def reintegrateAll(baseurl, provider, organization, token):
     repositories = listRepositories(baseurl, provider, organization, token)
     for repo in repositories:
-        reintegrate(baseurl, repo['repositoryId'], providers[provider])
-
+        reintegrate(baseurl, provider, organization,
+                    repo['name'], repo['repositoryId'])
+        enableDecoration(baseurl, provider,
+                         organization, repo['name'], repo['repositoryId'])
 
 
 # TODO: paginate instead of requesting 10000 repos
@@ -120,6 +130,36 @@ def listRepositories(baseurl, provider, organization, token):
     repositories = json.loads(r.text)
     return repositories['data']
 
+
+def enableAllDecorations(baseurl, provider, organization, token):
+    repositories = listRepositories(baseurl, provider, organization, token)
+    for repo in repositories:
+        enableDecoration(baseurl, repo['repositoryId'], providers[provider])
+
+
+def enableDecoration(baseurl, provider, organization, repo, repoId):
+    integrationId = findIntegrationId(baseurl, provider, organization, repo)
+    authority = re.sub('http[s]{0,1}://', '', baseurl)
+    headers = {
+        'authority': authority,
+        'x-requested-with': 'XMLHttpRequest',
+        'cookie': readCookieFile(),
+        'Content-Type': 'application/json'
+    }
+    url = '%s/integrations/update/%s/%s/' % (baseurl, repoId, integrationId)
+    data = '{}'
+    if(provider == 'gle'):
+        data = {
+            "mappings": """[{\"notificationType\":\"GitLabCommitStatus\",\"eventType\":\"PullRequestDeltaCreated\",\"integrationId\":%s},{\"notificationType\":\"GitLabPullRequestComment\",\"eventType\":\"PullRequestDeltaCreated\",\"integrationId\":%s},{\"notificationType\":\"GitLabPullRequestSummary\",\"eventType\":\"PullRequestDeltaCreated\",\"integrationId\":%s}]"""%(integrationId, integrationId, integrationId)
+        }
+    elif(provider == "gh"):
+        data = {
+            "mappings": """[{"notificationType": "GitHubCommitStatus","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestComment","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestSummary","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubSuggestions", "eventType": "PullRequestDeltaCreated", "integrationId": %s}]""" % (integrationId, integrationId, integrationId, integrationId)}
+
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    print(response.text)
+
+
 def main():
     print('Welcome to Codacy Integration Helper - A temporary solution')
     parser = argparse.ArgumentParser(description='Codacy Integration Helper')
@@ -133,10 +173,17 @@ def main():
                         default=None, help='organization id')
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
                         help='codacy server address (ignore if cloud)')
+    parser.add_argument('--repoid', dest='repoId', default=None,
+                        help='Repository numeric id')
     args = parser.parse_args()
     if args.which == None:
-        reintegrateAll(args.baseurl, args.provider, args.organization, args.token)
+        reintegrateAll(args.baseurl, args.provider,
+                       args.organization, args.token)
     else:
-        reintegrate(args.baseurl, args.which, providers[args.provider])
-        
+        reintegrate(args.baseurl, args.provider,
+                    args.organization, args.which, args.repoId)
+        enableDecoration(args.baseurl, args.provider,
+                         args.organization, args.which, args.repoId)
+
+
 main()
