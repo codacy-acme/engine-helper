@@ -209,7 +209,9 @@ def main():
                         help='codacy server address (ignore if cloud)')
     args = parser.parse_args()
     if args.action == 'listengines':
-        listEngines(args.baseurl)
+        engines = listEngines(args.baseurl)
+        for engine in engines:
+            print(f'{engine["name"]} ({engine["uuid"]})')
     elif args.action == 'securityonly':
         patternMapping = json.load(open('./patterns.json'))
         patterns = listAllPatterns(args.baseurl)

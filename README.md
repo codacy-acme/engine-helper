@@ -58,3 +58,17 @@ python3 reintegrator.py --token {token} --provider {git-provider} --organization
 ```
 
 Flag --which is optional. If missing, will be for all repositories.
+
+
+## Generate Configuration File for Tool
+
+Generates a configuration file for the given tool. Since it's a PoC, currently only supports PMD.
+
+```bash
+ config_file_generator.py [-h] [--token TOKEN] [--provider PROVIDER] [--organization ORGANIZATION] [--tooluuid TOOLUUID] [--baseurl BASEURL]
+```
+
+Tools list can retrieved using:
+```bash
+python3 main.py --action listengines [--baseurl BASEURL]
+```
