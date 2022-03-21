@@ -155,6 +155,10 @@ def enableDecoration(baseurl, provider, organization, repo, repoId):
     elif(provider == "gh"):
         data = {
             "mappings": """[{"notificationType": "GitHubCommitStatus","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestComment","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestSummary","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubSuggestions", "eventType": "PullRequestDeltaCreated", "integrationId": %s}]""" % (integrationId, integrationId, integrationId, integrationId)}
+    elif(provider == "bb"):
+        data = {
+            "mappings": """[{"notificationType":"BitbucketCommitStatus","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestComment","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestSummary","eventType":"PullRequestDeltaCreated","integrationId":%s}]"""% (integrationId, integrationId, integrationId)
+        }
 
     response = requests.post(url, headers=headers, data=json.dumps(data))
     print(response.text)
