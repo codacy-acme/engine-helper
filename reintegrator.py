@@ -11,7 +11,7 @@ import time
 providers = {
     'gh': 'GitHub',
     'gl': 'GitLab',
-    'bb': 'BitBucket',
+    'bb': 'Bitbucket',
     'ghe': 'GitHubEnterprise',
     'gle': 'GitLabEnterprise',
     'bbe': 'Stash'
