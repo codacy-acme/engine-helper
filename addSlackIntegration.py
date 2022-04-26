@@ -68,7 +68,7 @@ def enableAllDecorations(baseurl, provider, organization,webhookURL,slackChannel
     for repo in repositories:
         if(findIntegrationId(baseurl, provider, organization, repo['name']) != -1):
             enableDecoration(baseurl, provider,organization, repo['name'],repo['repositoryId'], webhookURL,slackChannel)
-        
+
 def enableDecoration(baseurl, provider, organization, repo, repoId, webhookURL,slackChannel):
     integrationId = findIntegrationId(baseurl, provider, organization, repo)
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -112,7 +112,7 @@ def main():
 
     if args.which == None:
         addSlackAllRepos(args.baseurl, args.provider,args.organization,args.token)
-        enableAllDecorations(args.baseurl,args.provider,args.organization,args.webhookURL,args.slackChannel,args.token) 
+        enableAllDecorations(args.baseurl,args.provider,args.organization,args.webhookURL,args.slackChannel,args.token)
     else:
         statusCode = addSlackIntegration(args.baseurl,args.repoId)
         if(statusCode == 200):
