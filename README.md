@@ -59,6 +59,18 @@ python3 reintegrator.py --token {token} --provider {git-provider} --organization
 
 Flag --which is optional. If missing, will be for all repositories.
 
+## Add Slack integration 
+
+This script will add the slack integration automatically for a specific repository (or all repositories if the option --which is present on the command)
+
+### Execution
+
+```bash
+python3 addSlackIntegration.py --token {token} --provider {git-provider} --organization {organization} --which {reponame (optional)} --repoid {repoid (optional)} --baseurl {baseurl (optional)} --slackChannel {slack channel} --webhookURL {url of slack app}
+```
+
+Flag --which is optional. If missing, will be for all repositories.
+
 
 ## Generate Configuration File for Tool
 
