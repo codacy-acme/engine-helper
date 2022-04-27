@@ -128,7 +128,6 @@ def main():
                         enableDecoration(args.baseurl, args.provider, args.organization, args.which or repos['name'], args.repoId or repos['repositoryId'], args.webhookURL,args.slackChannel)
                 else:
                     print(f"Repository: [{repos['name']}] with the ID: [{str(repos['repositoryId'])}] already configured")
-            
     end_time = time.time()
     print(f"\nThe program has finished in {str(round((end_time - start_time),0))} seconds\n")
 
