@@ -40,9 +40,9 @@ def addSlackIntegration(baseurl,repoId):
     data = '{}'
     response = requests.post(url, headers=headers, data=data)
     if(response.status_code == 200):
-        print('RepoID: ['+str(repoId)+'] Slack integrated successfully')
+        print(f"RepoID: [{str(repoId)}] Slack integrated successfully")
     else:
-        print('RepoID ['+str(repoId)+'] Slack not integrated')
+        print(f"RepoID [{str(repoId)}] Slack not integrated")
     return response.status_code
 
 def listRepositories(baseurl, provider, organization, token):
@@ -64,7 +64,7 @@ def addSlackAllRepos(baseurl,provider,organization,token):
         if(findIntegrationId(baseurl, provider, organization, repo['name']) == -1):
             addSlackIntegration(baseurl,repo['repositoryId'])
         else:
-            print('Repository: ['+repo['name']+'] Slack already integrated')
+            print(f"Repository: [{repo['name']}] Slack already integrated")
 
 def enableAllDecorations(baseurl, provider, organization,webhookURL,slackChannel, token):
     repositories = listRepositories(baseurl, provider, organization, token)
@@ -72,7 +72,7 @@ def enableAllDecorations(baseurl, provider, organization,webhookURL,slackChannel
         if(findIntegrationId(baseurl, provider, organization, repo['name']) != -1):
             enableDecoration(baseurl, provider,organization, repo['name'],repo['repositoryId'], webhookURL,slackChannel)
         else:
-            print('Repository: ['+repo['name']+'] Slack not created yet')
+            print(f"Repository: [{repo['name']}] Slack not created yet")
 
 def enableDecoration(baseurl, provider, organization, repo, repoId, webhookURL,slackChannel):
     integrationId = findIntegrationId(baseurl, provider, organization, repo)
@@ -87,9 +87,9 @@ def enableDecoration(baseurl, provider, organization, repo, repoId, webhookURL,s
     data = '{"webHook":"%s","channel":"%s"}' %(webhookURL,slackChannel)
     response = requests.post(url, headers=headers, data=data)
     if(response.status_code != 200):
-        print('Repository: ['+repo+'] with the ID: ['+str(repoId)+'] not configured properly')
+        print(f"Repository: [{repo}] with the ID: [{str(repoId)}] not configured properly")
     else:
-        print('Repository: ['+repo+'] with the ID: ['+str(repoId)+'] Slack configured!')
+        print(f"Repository: [{repo}] with the ID: [{str(repoId)}] Slack configured!")
     return response.status_code
 
 def main():
@@ -127,8 +127,9 @@ def main():
                     if(statusCode == 200):
                         enableDecoration(args.baseurl, args.provider, args.organization, args.which or repos['name'], args.repoId or repos['repositoryId'], args.webhookURL,args.slackChannel)
                 else:
-                    print('Repository: ['+repos['name']+'] with the ID: ['+str(repos['repositoryId'])+'] already configured')
+                    print(f"Repository: [{repos['name']}] with the ID: [{str(repos['repositoryId'])}] already configured")
+            
     end_time = time.time()
-    print("\nThe program has finished in " +str(round((end_time - start_time),0))+ " seconds\n")
+    print(f"\nThe program has finished in {str(round((end_time - start_time),0))} seconds\n")
 
 main()
