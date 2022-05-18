@@ -61,7 +61,7 @@ Flag --which is optional. If missing, will be for all repositories.
 
 ## Add Slack integration 
 
-This script will add the slack integration automatically for a specific repository (or all repositories if the option --which does not have the repository name present)
+This script will add the slack integration automatically for a specific repository (or all repositories if the option --which and --repoid is not present). To integrate a specific repository, you must use the arguments --which <reponame> and --repoid <repoid>
 
 ### Execution
 
