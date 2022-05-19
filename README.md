@@ -74,7 +74,7 @@ Flag --which is optional. If missing, will be for all repositories.
 
 ## Create Coding Standard 
 
-This script will create a coding standard with all Medium and Critical Security issues enabled (all the other ones disabled) automatically for all repositories with the languages already present in all organization and supported by Codacy
+This script will create a coding standard with all Medium and Critical Security issues enabled (all the other ones disabled) automatically for all repositories with the languages already present in all repositories within the organization and supported by Codacy
 
 ### Execution
 
