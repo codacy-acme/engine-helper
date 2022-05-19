@@ -1,5 +1,3 @@
-from ast import pattern
-from turtle import update
 import requests
 import json
 import re
@@ -107,7 +105,7 @@ def listPatterns(baseurl,toolID):
         if hasNextPage:
             cursor = '&cursor=%s' % patterns['pagination']['cursor']
     return result
-    
+
 def enableSecurityPatterns(patterns,baseurl,provider,organization,token,toolUuid,codingID):
     patternsPayload = []
     for pattern in patterns:
@@ -223,7 +221,7 @@ def setDefault(baseurl,provider,organization,token,codingID):
         }
         """
     setDefault = requests.post(url, headers=headers, data = data)
-    return setDefault.status_code 
+    return setDefault.status_code
 
 def getFirstRepo(repositories):
     for repo in repositories:
