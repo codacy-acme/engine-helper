@@ -110,7 +110,9 @@ def reintegrate(baseurl, provider, organization, repository, repoId):
 def reintegrateAll(baseurl, provider, organization, token, which):
     repositories = listRepositories(baseurl, provider, organization, token)
     allAboard = (which == None)
-    targetRepos = which.split(',')
+    targetRepos = []
+    if not allAboard:
+        targetRepos = which.split(',')
     for repo in repositories:
         if allAboard or repo['name'] in targetRepos:
             reintegrate(baseurl, provider, organization,
