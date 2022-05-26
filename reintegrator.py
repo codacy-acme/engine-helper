@@ -91,7 +91,7 @@ def enableIntegration(baseurl, repoId, provider):
     #webbrowser.get(chrome_path).open(url, new=2)
     webbrowser.open(url, new=2)
     # sleep for browser time
-    time.sleep(1)
+    time.sleep(5)
 
 
 def reintegrate(baseurl, provider, organization, repository, repoId):
@@ -107,13 +107,16 @@ def reintegrate(baseurl, provider, organization, repository, repoId):
     enableIntegration(baseurl, repoId, providerEnable)
 
 
-def reintegrateAll(baseurl, provider, organization, token):
+def reintegrateAll(baseurl, provider, organization, token, which):
     repositories = listRepositories(baseurl, provider, organization, token)
+    allAboard = (which == None)
+    targetRepos = which.split(',')
     for repo in repositories:
-        reintegrate(baseurl, provider, organization,
-                    repo['name'], repo['repositoryId'])
-        enableDecoration(baseurl, provider,
-                         organization, repo['name'], repo['repositoryId'])
+        if allAboard or repo['name'] in targetRepos:
+            reintegrate(baseurl, provider, organization,
+                        repo['name'], repo['repositoryId'])
+            enableDecoration(baseurl, provider,
+                            organization, repo['name'], repo['repositoryId'])
 
 
 # TODO: paginate instead of requesting 10000 repos
@@ -170,24 +173,17 @@ def main():
     parser.add_argument('--token', dest='token', default=None,
                         help='the api-token to be used on the REST API')
     parser.add_argument('--which', dest='which', default=None,
-                        help='repository to be updated, none means all')
+                        help='comma separated list of the repositories to be updated, none means all')
     parser.add_argument('--provider', dest='provider',
                         default=None, help='git provider (gh|gl|bb|ghe|gle|bbe')
     parser.add_argument('--organization', dest='organization',
                         default=None, help='organization id')
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
                         help='codacy server address (ignore if cloud)')
-    parser.add_argument('--repoid', dest='repoId', default=None,
-                        help='Repository numeric id')
+    
     args = parser.parse_args()
-    if args.which == None:
-        reintegrateAll(args.baseurl, args.provider,
-                       args.organization, args.token)
-    else:
-        reintegrate(args.baseurl, args.provider,
-                    args.organization, args.which, args.repoId)
-        enableDecoration(args.baseurl, args.provider,
-                         args.organization, args.which, args.repoId)
 
+    reintegrateAll(args.baseurl, args.provider,
+                       args.organization, args.token, args.which)
 
 main()

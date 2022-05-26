@@ -54,7 +54,7 @@ Currently works on Codacy Cloud. On-prem will be available in the next release (
 ### Execution
 
 ```bash
-python3 reintegrator.py --token {token} --provider {git-provider} --organization {organization} --which {reponame (optional)} --repoid {repoid (optional)} --baseurl {baseurl (optional)}
+python3 reintegrator.py --token {token} --provider {git-provider} --organization {organization} --which {reponame (optional)} --baseurl {baseurl (optional)}
 ```
 
 Flag --which is optional. If missing, will be for all repositories.
