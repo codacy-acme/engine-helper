@@ -100,8 +100,7 @@ def listPatterns(baseurl,toolID, provider, organization, codingID,token):
         patterns = json.loads(r.text)
         if 'data' in patterns:
             for pattern in patterns['data']:
-                if pattern['patternDefinition']['enabled'] == True:
-                    result.append(
+                result.append(
                         {
                             'id': pattern['patternDefinition']['id'],
                             'name': pattern['patternDefinition']['title'],
@@ -128,7 +127,8 @@ def enableSecurityPatterns(patterns,baseurl,provider,organization,token,toolUuid
 def disableAllPatterns(patterns,baseurl,provider,organization,token,toolUuid,codingID):
     patternsPayload = []
     for pattern in patterns:
-        patternsPayload.append({
+        if(pattern['enabled'] == True):
+            patternsPayload.append({
                 "id": pattern['id'],
                 "enabled": False
             })
