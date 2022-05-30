@@ -262,19 +262,21 @@ def main():
         if(createCodingStandardStatus < 200 and  createCodingStandardStatus >= 300):
             print("Coding Standard was not created. Please try again later: ",createCodingStandardStatus)
             return 0
+        else:
+            codingStandardID = getCodingStandardId(args.baseurl,args.provider,args.organization,args.token,False)
     else:
         createDraftStatus = createDraft(args.baseurl,args.provider,args.organization,args.token,languages)
         if(createDraftStatus < 200 and  createDraftStatus >= 300):
             print("Draft was not created. Please try again later: ",createDraftStatus)
             return 0
+        else:
+            codingStandardID = getCodingStandardId(args.baseurl,args.provider,args.organization,args.token,True)
     
-    #3rd step: check coding standard id
-    codingStandardID = getCodingStandardId(args.baseurl,args.provider,args.organization,args.token,True)
-    
-    #4th step: enable all medium and critical security rules and disabled all the other rules
+    #3rd step: enable all medium and critical security rules and disabled all the other rules
     enableToolsAndRules(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
     print("\n")
-    #5th step: apply draft to all repos
+    
+    #4th step: apply draft to all repos
     for repo in repositories:
         applyCodingStandardToRepositoriesStatus = applyCodingStandardToRepositories(args.baseurl,args.provider,args.organization,args.token,codingStandardID,repo['name'])
         if(applyCodingStandardToRepositoriesStatus >= 200 and  applyCodingStandardToRepositoriesStatus < 300):
@@ -282,14 +284,14 @@ def main():
         else:
             print("This Coding Standard failed to apply to the repo ",repo['name'])
 
-    #6th step: promote draft
+    #5th step: promote draft
     promoteDraftStatus = promoteDraft(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
     if(promoteDraftStatus >= 200 and  promoteDraftStatus < 300):
         print("This Coding Standard was promoted successfully")
     else:
         print("This Coding Standard failed to promote")
     
-    #7th step: set CS default
+    #6th step: set CS default
     setDefaultStatus = setDefault(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
     if(setDefaultStatus >= 200 and setDefaultStatus < 300):
         print("This Coding Standard was set as Default for all repos")
