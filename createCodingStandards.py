@@ -98,9 +98,8 @@ def listPatterns(baseurl,toolID, provider, organization, codingID,token):
             baseurl, provider, organization, codingID,toolID, cursor)
         r = requests.get(url, headers=headers)
         patterns = json.loads(r.text)
-        if 'data' in patterns:
-            for pattern in patterns['data']:
-                result.append(
+        for pattern in patterns['data']:
+            result.append(
                         {
                             'id': pattern['patternDefinition']['id'],
                             'name': pattern['patternDefinition']['title'],
@@ -108,7 +107,7 @@ def listPatterns(baseurl,toolID, provider, organization, codingID,token):
                             'severityLevel': pattern['patternDefinition']['severityLevel'],
                             'enabled': pattern['patternDefinition']['enabled']
                         }
-                    )
+                )
         hasNextPage = 'cursor' in patterns['pagination']
         if hasNextPage:
             cursor = 'cursor=%s' % patterns['pagination']['cursor']
@@ -127,10 +126,9 @@ def enableSecurityPatterns(patterns,baseurl,provider,organization,token,toolUuid
 def disableAllPatterns(patterns,baseurl,provider,organization,token,toolUuid,codingID):
     patternsPayload = []
     for pattern in patterns:
-        if(pattern['enabled'] == True):
-            patternsPayload.append({
-                "id": pattern['id'],
-                "enabled": False
+        patternsPayload.append({
+            "id": pattern['id'],
+            "enabled": False
             })
     enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload,codingID)
 
@@ -178,6 +176,7 @@ def enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPaylo
     }
     data = json.dumps(data)
     updateRule = requests.patch(url, data = data, headers=headers)
+    time.sleep(2)
     return updateRule.status_code
 
 def applyCodingStandardToRepositories(baseurl,provider,organization,token,codingID,repositories):
@@ -260,12 +259,12 @@ def main():
     repo = getFirstRepo(repositories)
     if (getCodingStandardId(args.baseurl,args.provider,args.organization,args.token,False) == None):
         createCodingStandardStatus = createCodingStandard(args.baseurl,args.provider,args.organization,args.token,languages,repo)
-        if(createCodingStandardStatus > 204):
+        if(createCodingStandardStatus < 200 and  createCodingStandardStatus >= 300):
             print("Coding Standard was not created. Please try again later: ",createCodingStandardStatus)
             return 0
     else:
         createDraftStatus = createDraft(args.baseurl,args.provider,args.organization,args.token,languages)
-        if(createDraftStatus > 204):
+        if(createDraftStatus < 200 and  createDraftStatus >= 300):
             print("Draft was not created. Please try again later: ",createDraftStatus)
             return 0
     
@@ -278,24 +277,21 @@ def main():
     #5th step: apply draft to all repos
     for repo in repositories:
         applyCodingStandardToRepositoriesStatus = applyCodingStandardToRepositories(args.baseurl,args.provider,args.organization,args.token,codingStandardID,repo['name'])
-        if(applyCodingStandardToRepositoriesStatus <= 204):
+        if(applyCodingStandardToRepositoriesStatus >= 200 and  applyCodingStandardToRepositoriesStatus < 300):
             print("This Coding Standard was applied to the repo: ",repo['name'])
         else:
             print("This Coding Standard failed to apply to the repo ",repo['name'])
-    
+
     #6th step: promote draft
     promoteDraftStatus = promoteDraft(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
-    if(promoteDraftStatus <= 204):
+    if(promoteDraftStatus >= 200 and  promoteDraftStatus < 300):
         print("This Coding Standard was promoted successfully")
     else:
         print("This Coding Standard failed to promote")
-        enddate = time.time()
-        print("The script took ",round(enddate-startdate,2)," seconds")
-        return 0
     
     #7th step: set CS default
     setDefaultStatus = setDefault(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
-    if(setDefaultStatus <= 204):
+    if(setDefaultStatus >= 200 and setDefaultStatus < 300):
         print("This Coding Standard was set as Default for all repos")
     else:
         print("This Coding Standard failed to set as Default for all repos")
