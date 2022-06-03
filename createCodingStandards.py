@@ -78,7 +78,7 @@ def listTools(baseurl,provider,organization,token,codingID):
     return data
 
 def enableTools(data,baseurl,provider,organization,token,codingID): #enable all tools according to the languages in CS languages
-    enabled = True
+    enabled = "true"
     for tools in data:
         print("Enabling the tool ID:", tools['uuid'])
         enableDisableTool(baseurl,provider,organization,token,tools['uuid'],enabled,codingID)
@@ -163,7 +163,7 @@ def enableDisableTool(baseurl,provider,organization,token,toolUuid,enabled,codin
         """ % (enabled)
     updateTool = requests.patch(url, data = data, headers=headers)
     print(updateTool.status_code)
-    time.sleep(1)
+    time.sleep(2)
 
 def enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -181,7 +181,7 @@ def enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPaylo
     data = json.dumps(data)
     updateRule = requests.patch(url, data = data, headers=headers)
     print(updateRule.status_code)
-    time.sleep(1)
+    time.sleep(2)
 
 def applyCodingStandardToRepositories(baseurl,provider,organization,token,codingID,repositories):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -203,7 +203,7 @@ def applyCodingStandardToRepositories(baseurl,provider,organization,token,coding
     """ % (repositories)
     applyCodingStandard = requests.patch(url, data = data, headers=headers)
     print(applyCodingStandard.status_code)
-    time.sleep(1)
+    time.sleep(2)
 
 def promoteDraft(baseurl,provider,organization,token,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -286,6 +286,7 @@ def main():
         applyCodingStandardToRepositories(args.baseurl,args.provider,args.organization,args.token,codingStandardID,repo['name'])
 
     #5th step: promote draft
+    time.sleep(2)
     print("Promoting this CS...")
     promoteDraft(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
     
