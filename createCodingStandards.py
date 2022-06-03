@@ -78,8 +78,9 @@ def listTools(baseurl,provider,organization,token,codingID):
     return data
 
 def enableTools(data,baseurl,provider,organization,token,codingID): #enable all tools according to the languages in CS languages
-    enabled = "true"
+    enabled = True
     for tools in data:
+        print("Enabling the tool ID:", tools['uuid'])
         enableDisableTool(baseurl,provider,organization,token,tools['uuid'],enabled,codingID)
 
 def listPatterns(baseurl,toolID, provider, organization, codingID,token):
@@ -121,7 +122,8 @@ def enableSecurityPatterns(patterns,baseurl,provider,organization,token,toolUuid
                 "id": pattern['id'],
                 "enabled": True
             })
-    enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload,codingID)
+    for i in range(0, len(patternsPayload), 1000):
+        enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload[i:i+1000],codingID)
 
 def disableAllPatterns(patterns,baseurl,provider,organization,token,toolUuid,codingID):
     patternsPayload = []
@@ -130,15 +132,16 @@ def disableAllPatterns(patterns,baseurl,provider,organization,token,toolUuid,cod
             "id": pattern['id'],
             "enabled": False
             })
-    enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload,codingID)
+    for i in range(0, len(patternsPayload), 1000):
+        enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload[i:i+1000],codingID)
 
 def enableToolsAndRules(baseurl,provider,organization,token,codingID):
     tools = listTools(baseurl,provider,organization,token,codingID)
     enableTools(tools,baseurl,provider,organization,token,codingID)
     for tool in tools:
-        patterns = listPatterns(baseurl,tool['uuid'], provider, organization, codingID,token)
         print("\nWe're working on the tool ID: ",tool['uuid'])
-        disableAllPatterns(patterns,baseurl,provider,organization,token,tool['uuid'],codingID) 
+        patterns = listPatterns(baseurl,tool['uuid'], provider, organization, codingID,token)
+        disableAllPatterns(patterns,baseurl,provider,organization,token,tool['uuid'],codingID)
         enableSecurityPatterns(patterns,baseurl,provider,organization,token,tool['uuid'],codingID)
         print("The work is done for the tool ID: ",tool['uuid'])
 
@@ -159,7 +162,8 @@ def enableDisableTool(baseurl,provider,organization,token,toolUuid,enabled,codin
         }
         """ % (enabled)
     updateTool = requests.patch(url, data = data, headers=headers)
-    return updateTool.status_code
+    print(updateTool.status_code)
+    time.sleep(1)
 
 def enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -176,8 +180,8 @@ def enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPaylo
     }
     data = json.dumps(data)
     updateRule = requests.patch(url, data = data, headers=headers)
-    time.sleep(2)
-    return updateRule.status_code
+    print(updateRule.status_code)
+    time.sleep(1)
 
 def applyCodingStandardToRepositories(baseurl,provider,organization,token,codingID,repositories):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -198,7 +202,8 @@ def applyCodingStandardToRepositories(baseurl,provider,organization,token,coding
         }
     """ % (repositories)
     applyCodingStandard = requests.patch(url, data = data, headers=headers)
-    return applyCodingStandard.status_code
+    print(applyCodingStandard.status_code)
+    time.sleep(1)
 
 def promoteDraft(baseurl,provider,organization,token,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -210,7 +215,7 @@ def promoteDraft(baseurl,provider,organization,token,codingID):
     }
     url = f'{baseurl}/api/v3/organizations/{provider}/{organization}/coding-standards/{codingID}/promote'
     promoteDraft = requests.post(url, headers=headers)
-    return promoteDraft.status_code
+    print(promoteDraft.status_code)
 
 def setDefault(baseurl,provider,organization,token,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -227,7 +232,7 @@ def setDefault(baseurl,provider,organization,token,codingID):
         }
         """
     setDefault = requests.post(url, headers=headers, data = data)
-    return setDefault.status_code
+    print(setDefault.status_code)
 
 def getFirstRepo(repositories):
     for repo in repositories:
@@ -259,7 +264,7 @@ def main():
     repo = getFirstRepo(repositories)
     if (getCodingStandardId(args.baseurl,args.provider,args.organization,args.token,False) == None):
         createCodingStandardStatus = createCodingStandard(args.baseurl,args.provider,args.organization,args.token,languages,repo)
-        if(createCodingStandardStatus < 200 and  createCodingStandardStatus >= 300):
+        if(createCodingStandardStatus < 200 and createCodingStandardStatus >= 300):
             print("Coding Standard was not created. Please try again later: ",createCodingStandardStatus)
             return 0
         else:
@@ -274,29 +279,19 @@ def main():
     
     #3rd step: enable all medium and critical security rules and disabled all the other rules
     enableToolsAndRules(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
-    print("\n")
     
     #4th step: apply draft to all repos
     for repo in repositories:
-        applyCodingStandardToRepositoriesStatus = applyCodingStandardToRepositories(args.baseurl,args.provider,args.organization,args.token,codingStandardID,repo['name'])
-        if(applyCodingStandardToRepositoriesStatus >= 200 and  applyCodingStandardToRepositoriesStatus < 300):
-            print("This Coding Standard was applied to the repo: ",repo['name'])
-        else:
-            print("This Coding Standard failed to apply to the repo ",repo['name'])
+        print("Applying this CS to the repo: ",repo['name'])
+        applyCodingStandardToRepositories(args.baseurl,args.provider,args.organization,args.token,codingStandardID,repo['name'])
 
     #5th step: promote draft
-    promoteDraftStatus = promoteDraft(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
-    if(promoteDraftStatus >= 200 and  promoteDraftStatus < 300):
-        print("This Coding Standard was promoted successfully")
-    else:
-        print("This Coding Standard failed to promote")
+    print("Promoting this CS...")
+    promoteDraft(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
     
     #6th step: set CS default
-    setDefaultStatus = setDefault(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
-    if(setDefaultStatus >= 200 and setDefaultStatus < 300):
-        print("This Coding Standard was set as Default for all repos")
-    else:
-        print("This Coding Standard failed to set as Default for all repos")
+    print("Setting this CS as default...")
+    setDefault(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
 
     enddate = time.time()
     print("The script took ",round(enddate-startdate,2)," seconds")
