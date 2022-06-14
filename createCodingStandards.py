@@ -122,18 +122,18 @@ def enableSecurityPatterns(patterns,baseurl,provider,organization,token,toolUuid
                 "id": pattern['id'],
                 "enabled": True
             })
-    for i in range(0, len(patternsPayload), 1000):
-        enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload[i:i+1000],codingID)
+    for i in range(0, len(patternsPayload), 500):
+        enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload[i:i+500],codingID)
 
 def disableAllPatterns(patterns,baseurl,provider,organization,token,toolUuid,codingID):
     patternsPayload = []
     for pattern in patterns:
         patternsPayload.append({
-            "id": pattern['id'],
-            "enabled": False
-            })
-    for i in range(0, len(patternsPayload), 1000):
-        enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload[i:i+1000],codingID)
+                "id": pattern['id'],
+                "enabled": False
+                })
+    for i in range(0, len(patternsPayload), 500):
+        enableDisableRule(baseurl,provider,organization,token,toolUuid,patternsPayload[i:i+500],codingID)
 
 def enableToolsAndRules(baseurl,provider,organization,token,codingID):
     tools = listTools(baseurl,provider,organization,token,codingID)
@@ -143,7 +143,6 @@ def enableToolsAndRules(baseurl,provider,organization,token,codingID):
         patterns = listPatterns(baseurl,tool['uuid'], provider, organization, codingID,token)
         disableAllPatterns(patterns,baseurl,provider,organization,token,tool['uuid'],codingID)
         enableSecurityPatterns(patterns,baseurl,provider,organization,token,tool['uuid'],codingID)
-        print("The work is done for the tool ID: ",tool['uuid'])
 
 def enableDisableTool(baseurl,provider,organization,token,toolUuid,enabled,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
@@ -209,7 +208,6 @@ def promoteDraft(baseurl,provider,organization,token,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
     headers = {
         'authority': authority,
-        'x-requested-with': 'XMLHttpRequest',
         'Content-Type': 'application/json',
         'api-token': token
     }
@@ -221,7 +219,6 @@ def setDefault(baseurl,provider,organization,token,codingID):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
     headers = {
         'authority': authority,
-        'x-requested-with': 'XMLHttpRequest',
         'Content-Type': 'application/json',
         'api-token': token
     }
@@ -233,10 +230,6 @@ def setDefault(baseurl,provider,organization,token,codingID):
         """
     setDefault = requests.post(url, headers=headers, data = data)
     print(setDefault.status_code)
-
-def getFirstRepo(repositories):
-    for repo in repositories:
-        return repo['name']
 
 def main():
     print('\nWelcome to Codacy!')
@@ -261,9 +254,8 @@ def main():
     languages = listLanguagesAllRepos(repositories)
 
     #2nd step: create Coding Standard if it doesn't exist one or create a Draft of a existing Coding Standard
-    repo = getFirstRepo(repositories)
     if (getCodingStandardId(args.baseurl,args.provider,args.organization,args.token,False) == None):
-        createCodingStandardStatus = createCodingStandard(args.baseurl,args.provider,args.organization,args.token,languages,repo)
+        createCodingStandardStatus = createCodingStandard(args.baseurl,args.provider,args.organization,args.token,languages,repositories[0]['name'])
         if(createCodingStandardStatus < 200 and createCodingStandardStatus >= 300):
             print("Coding Standard was not created. Please try again later: ",createCodingStandardStatus)
             return 0
@@ -286,9 +278,9 @@ def main():
         applyCodingStandardToRepositories(args.baseurl,args.provider,args.organization,args.token,codingStandardID,repo['name'])
 
     #5th step: promote draft
-    time.sleep(2)
     print("Promoting this CS...")
     promoteDraft(args.baseurl,args.provider,args.organization,args.token,codingStandardID)
+    
     
     #6th step: set CS default
     print("Setting this CS as default...")
