@@ -194,7 +194,7 @@ def main():
     args = parser.parse_args()
 
     print("\nScript is running... take a coffee and enjoy!\n")
-    
+
     startdate = time.time()
     
     if args.fileFormat.lower() not in ['pdf','xlsx']:
