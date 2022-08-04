@@ -8,6 +8,7 @@ from reportlab.pdfgen import canvas
 from bs4 import BeautifulSoup
 from datetime import datetime
 import xlsxwriter
+import argparse
 
 def readCookieFile():
     with open('auth.cookie', 'r') as myfile:
@@ -175,29 +176,44 @@ def writeSecurityReportXLSX(path_to_repos,json_files_repos,organization):
     workbook.close()
 
 def main():
-    if len(sys.argv) < 6:
-        print('Usage: python generateSecurityReport.py baseurl provider orgname orgid APItoken fileFormat')
-        return
-    baseurl       = sys.argv[1]
-    provider      = sys.argv[2]
-    organization  = sys.argv[3]
-    orgid         = sys.argv[4]
-    token         = sys.argv[5]
-    fileFormat    = sys.argv[6]
-    if fileFormat.lower() not in ['pdf','xlsx']:
+    print('\nWelcome to Codacy!')
+
+    parser = argparse.ArgumentParser(description='Codacy Security Report')
+
+    parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
+                        help='codacy server address (ignore if you use cloud)')
+    parser.add_argument('--provider', dest='provider', default=None, 
+                        help='git provider (gh|gl|bb|ghe|gle|bbe')
+    parser.add_argument('--organization', dest='organization',default=None, 
+                        help='organization name')
+    parser.add_argument('--orgid', dest='orgid', default=None,
+                        help='organization id')
+    parser.add_argument('--token', dest='token', default=None,
+                        help='the api-token to be used on the REST API')
+    parser.add_argument('--format', dest='fileFormat', default=None,
+                        help='the format of the report: pdf or xlsx')
+    args = parser.parse_args()
+   
+    print("\nScript is running... take a coffee and enjoy!\n")
+    
+    startdate = time.time()
+    
+    if args.fileFormat.lower() not in ['pdf','xlsx']:
         print("Wrong format. Use PDF or XLSX")
         return
     else:
-        if not os.path.exists(f'./{organization}'):
-            os.makedirs(f'./{organization}')
-        getIssues(baseurl,provider,organization,token,orgid)
-        path_to_repos = f'{organization}/'
+        if not os.path.exists(f'./{args.organization}'):
+            os.makedirs(f'./{args.organization}')
+        getIssues(args.baseurl,args.provider,args.organization,args.token,args.orgid)
+        path_to_repos = f'{args.organization}/'
         json_files_repos = [pos_json for pos_json in os.listdir(path_to_repos) if pos_json.endswith('.json')]
 
-    if fileFormat.lower() == 'pdf':
-        writeSecurityReportPDF(path_to_repos,json_files_repos,organization)
+    if args.fileFormat.lower() == 'pdf':
+        writeSecurityReportPDF(path_to_repos,json_files_repos,args.organization)
     else:
-        writeSecurityReportXLSX(path_to_repos,json_files_repos,organization)
+        writeSecurityReportXLSX(path_to_repos,json_files_repos,args.organization)
 
+    enddate = time.time()
+    print("The script took ",round(enddate-startdate,2)," seconds")
 
 main()
