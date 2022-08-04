@@ -93,7 +93,7 @@ def writeSecurityReportPDF(path_to_repos,json_files_repos,organization):
     reportPDF = canvas.Canvas(f'{organization}-securityReport.pdf')
     y = 800
     reportPDF.setFont('Helvetica-Bold', 20)
-    reportPDF.drawString(200, y, f"Security Report - {datetime.today().strftime('%d-%m-%Y')}") 
+    reportPDF.drawString(200, y, f"Security Report - {datetime.today().strftime('%d-%m-%Y')}")
     for jsonFile in json_files_repos:
         tableSecIssues = []
         countSecurityIssues = 0
@@ -117,11 +117,11 @@ def writeSecurityReportPDF(path_to_repos,json_files_repos,organization):
                 if y-20 < 100:
                     reportPDF.showPage()
                     y = 800
-                    reportPDF.setFont('Helvetica', 14)    
+                    reportPDF.setFont('Helvetica', 14)
         countTotalSecurityIssues+=countSecurityIssues
         y-=20
         reportPDF.drawString(5, y, f'Critical: {countErrors} - Medium: {countWarning} - Minor: {countMinor}')
-        y-=20 
+        y-=20
         reportPDF.drawString(5, y, f'Count of security issues: {countSecurityIssues}')
         if y-20 < 100:
             reportPDF.showPage()
@@ -130,7 +130,7 @@ def writeSecurityReportPDF(path_to_repos,json_files_repos,organization):
             y-=20
     reportPDF.setFont('Helvetica-Bold', 15)
     y-=30
-    reportPDF.drawString(5, y, f'Total security issues of organization: {countTotalSecurityIssues}')    
+    reportPDF.drawString(5, y, f'Total security issues of organization: {countTotalSecurityIssues}')
     reportPDF.save()
 
 def writeSecurityReportXLSX(path_to_repos,json_files_repos,organization):
@@ -166,7 +166,7 @@ def writeSecurityReportXLSX(path_to_repos,json_files_repos,organization):
             if issue['message'] not in tableSecIssues:
                 tableSecIssues.append(issue['message'])
                 worksheet2.write(rowSheet2, 1, issue['message'],listFormat)
-                rowSheet2+=1 
+                rowSheet2+=1
         countTotalSecurityIssues+=countSecurityIssues
         rowSheet1+=1
         secInfo = (jsonFile[0:-5],countErrors,countWarning,countMinor,countSecurityIssues)
@@ -184,7 +184,6 @@ def main():
     orgid         = sys.argv[4]
     token         = sys.argv[5]
     fileFormat    = sys.argv[6]
-    
     if fileFormat.lower() not in ['pdf','xlsx']:
         print("Wrong format. Use PDF or XLSX")
         return
