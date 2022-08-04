@@ -93,3 +93,15 @@ Tools list can retrieved using:
 ```bash
 python3 main.py --action listengines [--baseurl BASEURL]
 ```
+
+## Script to generate a report with all security issues of organization
+
+This script will generate a report with all security issues you can find on entire organization and
+the list of all security issues per repository
+
+### Execution
+
+```bash
+python3 generateSecurityReport.py baseurl provider orgname orgid APItoken fileFormat
+```
+fileFormat argument: it can be used PDF or XLSX
