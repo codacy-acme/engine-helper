@@ -196,7 +196,7 @@ def main():
     print("\nScript is running... take a coffee and enjoy!\n")
 
     startdate = time.time()
-    
+
     if args.fileFormat.lower() not in ['pdf','xlsx']:
         print("Wrong format. Use PDF or XLSX")
         return
