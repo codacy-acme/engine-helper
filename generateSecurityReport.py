@@ -3,7 +3,6 @@ import os
 import requests
 import re
 import time
-import sys
 from reportlab.pdfgen import canvas
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -182,9 +181,9 @@ def main():
 
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
                         help='codacy server address (ignore if you use cloud)')
-    parser.add_argument('--provider', dest='provider', default=None, 
+    parser.add_argument('--provider', dest='provider', default=None,
                         help='git provider (gh|gl|bb|ghe|gle|bbe')
-    parser.add_argument('--organization', dest='organization',default=None, 
+    parser.add_argument('--organization', dest='organization',default=None,
                         help='organization name')
     parser.add_argument('--orgid', dest='orgid', default=None,
                         help='organization id')
@@ -193,7 +192,7 @@ def main():
     parser.add_argument('--format', dest='fileFormat', default=None,
                         help='the format of the report: pdf or xlsx')
     args = parser.parse_args()
-   
+
     print("\nScript is running... take a coffee and enjoy!\n")
     
     startdate = time.time()
@@ -215,5 +214,6 @@ def main():
 
     enddate = time.time()
     print("The script took ",round(enddate-startdate,2)," seconds")
+
 
 main()
