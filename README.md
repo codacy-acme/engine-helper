@@ -104,4 +104,3 @@ the list of all security issues per repository
 ```bash
 python3 generateSecurityReport.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --format {pdf or xlsx}
 ```
-fileFormat argument: it can be used PDF or XLSX
