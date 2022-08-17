@@ -105,3 +105,13 @@ the list of all security issues per repository
 python3 generateSecurityReport.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --format {pdf or xlsx}
 ```
 fileFormat argument: it can be used PDF or XLSX
+
+## Script to generate a report with the performance of all commits for the last x days
+
+This script will generate a CSV file where you can find the new, fixed and ignored issues for all commits in the last x days for every repository across the organization.
+
+### Execution
+
+```bash
+python3 commitsPerformance.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --days {number of days}
+```
