@@ -65,25 +65,25 @@ def getCommitsList(baseurl,provider,organization,repository,apiToken,nrdays):
         print(response.status_code)
     return commitIdList
 
-def getReport(baseurl,listCommits,provider, organization,repository,apiToken):
-        authority = re.sub('http[s]{0,1}://', '', baseurl).split('/')[0]
-        headers = {
+def getIssuesCount(baseurl,listCommits,provider, organization,repository,apiToken):
+    authority = re.sub('http[s]{0,1}://', '', baseurl).split('/')[0]
+    headers = {
             'authority': authority,
             'cookie': readCookieFile()
             }
-        newIssues = 0
-        fixedIssues = 0
-        for eachCommit in listCommits:
-            url = '%s/admin?searchQuery=%s' % (
-                baseurl, eachCommit['commitID'])
-            response = requests.get(url,headers = headers)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for a in soup.find_all('li'):
-                if a.text[21:31] == eachCommit['shortCommitUUID']:
-                    issues = getMetrics(baseurl,a.text[21:],provider, organization,repository,apiToken)
-                    newIssues+=issues[0]
-                    fixedIssues+=issues[1]
-        return [newIssues, fixedIssues]
+    newIssues = 0
+    fixedIssues = 0
+    for eachCommit in listCommits:
+        url = '%s/admin?searchQuery=%s' % (
+            baseurl, eachCommit['commitID'])
+        response = requests.get(url,headers = headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        for a in soup.find_all('li'):
+            if a.text[21:31] == eachCommit['shortCommitUUID']:
+                issues = getMetrics(baseurl,a.text[21:],provider, organization,repository,apiToken)
+                newIssues+=issues[0]
+                fixedIssues+=issues[1]
+    return [newIssues, fixedIssues]
 
 def getMetrics(baseurl,commitUUID,provider, organization,repository,apiToken):
     url = '%s/api/v3/analysis/organizations/%s/%s/repositories/%s/commits/%s/deltaStatistics' % (
@@ -132,7 +132,7 @@ def generateReport(baseurl,provider,organization,orgid,apiToken,nrDays):
     for repo in repositories:
         print("Checking",repo['name'])
         listCommits = getCommitsList(baseurl,provider,organization,repo['name'],apiToken,nrDays)
-        countIssues = getReport(baseurl,listCommits,provider, organization,repo['name'],apiToken)
+        countIssues = getIssuesCount(baseurl,listCommits,provider, organization,repo['name'],apiToken)
         countIgnoredIssues = listIgnoredIssues(provider,organization,repo['name'],apiToken)
         totalIgnoredIssues+=countIgnoredIssues
         totalNewIssues+=countIssues[0]
@@ -170,5 +170,6 @@ def main():
 
     enddate = time.time()
     print("\nThe script took ",round(enddate-startdate,2)," seconds")
+
 
 main()
