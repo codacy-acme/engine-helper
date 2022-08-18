@@ -105,7 +105,7 @@ def listIgnoredIssues(provider,organization,repository,apiToken):
     cursor = ""
     countIgnoredIssues = 0
     while(hasNextPage):
-        url = f'https://app.codacy.com/api/v3/analysis/organizations/{provider}/{organization}/repositories/{repository}/ignoredIssues/search?{cursor}' 
+        url = f'https://app.codacy.com/api/v3/analysis/organizations/{provider}/{organization}/repositories/{repository}/ignoredIssues/search?{cursor}'
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -113,8 +113,7 @@ def listIgnoredIssues(provider,organization,repository,apiToken):
         }
         response = requests.post(url,headers=headers)
         issues = json.loads(response.text)
-        for issue in issues['data']:
-            countIgnoredIssues+=1
+        countIgnoredIssues+=len(issues['data'])
         hasNextPage = 'cursor' in issues['pagination']
         if hasNextPage:
             cursor = 'cursor=%s' % issues['pagination']['cursor']
@@ -165,7 +164,7 @@ def main():
     print("\nScript is running... take a coffee and enjoy!\n")
 
     startdate = time.time()
-    
+
     generateReport(args.baseurl,args.provider,args.organization,args.orgid,args.apiToken,args.nrDays)
 
     enddate = time.time()
