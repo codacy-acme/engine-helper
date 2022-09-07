@@ -116,3 +116,13 @@ This script will generate a CSV file where you can find the new, fixed and ignor
 ```bash
 python3 commitsPerformance.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --days {number of days}
 ```
+
+## Script to update Quality Settings 
+
+This script will update the Quality Settings for Pull-Requests (you can do the same for the commits as well) with the following rules: the PR's will be blocked if it has at least one Security issue or Medium/Critical issue of other category (Error Prone, Performance, Code Style, etc). This script allows you to update the Quality Settings for a specific list of repos or the entire organization.
+
+### Execution
+
+```bash
+python3 updateQualitySettings.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --reponame {comma separated list of the repositories to be updated, none means all}
+```
