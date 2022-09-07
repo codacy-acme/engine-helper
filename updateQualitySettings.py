@@ -53,7 +53,7 @@ def updateQualitySettings(provider,orgname,reponame,gitAction,apiToken):
 
     response = requests.put(f'https://app.codacy.com/api/v3/organizations/{provider}/{orgname}/repositories/{reponame}/settings/quality/{gitAction}',
             headers = headers,json=data)
-    
+
     print(gitAction,"-> status:",response.status_code)
 
 def main():
@@ -79,7 +79,7 @@ def main():
 
     startdate = time.time()
 
-    repositories = listRepositories(args.orgid) 
+    repositories = listRepositories(args.orgid)
     allRepos = (args.reponame == None)
     targetRepos = []
     if not allRepos:
