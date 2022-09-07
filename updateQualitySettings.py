@@ -3,7 +3,6 @@ import bs4
 import re
 import time
 import argparse
-import json
 
 def readCookieFile():
     with open('auth.cookie', 'r') as myfile:
@@ -38,16 +37,6 @@ def listRepositories(orgname):
         pageNumber += 1
     return repos
 
-def getQualitySettings(provider,orgname,reponame,gitAction,apiToken):
-    headers = {
-        'Accept': 'application/json',
-        'api-token': apiToken
-    }
-
-    r = requests.get(f'https://app.codacy.com/api/v3/organizations/{provider}/{orgname}/repositories/{reponame}/settings/quality/{gitAction}', headers = headers)
-
-    print (r.json())
-
 def updateQualitySettings(provider,orgname,reponame,gitAction,apiToken):
     headers = {
         'Content-Type': 'application/json',
@@ -62,7 +51,9 @@ def updateQualitySettings(provider,orgname,reponame,gitAction,apiToken):
         "securityIssueThreshold": 0
     }
 
-    response = requests.put(f'https://app.codacy.com/api/v3/organizations/{provider}/{orgname}/repositories/{reponame}/settings/quality/{gitAction}',headers = headers,json=data)
+    response = requests.put(f'https://app.codacy.com/api/v3/organizations/{provider}/{orgname}/repositories/{reponame}/settings/quality/{gitAction}',
+            headers = headers,json=data)
+    
     print(gitAction,"-> status:",response.status_code)
 
 def main():
@@ -103,11 +94,5 @@ def main():
     enddate = time.time()
     print("\nThe script took ",round(enddate-startdate,2)," seconds")
 
-
-
-    
-    
-    
-    
 
 main()
