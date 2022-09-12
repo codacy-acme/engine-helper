@@ -73,6 +73,7 @@ def getIssuesCount(baseurl,listCommits,provider, organization,repository,apiToke
             }
     newIssues = 0
     fixedIssues = 0
+    nrCommits = 0
     for eachCommit in listCommits:
         url = '%s/admin?searchQuery=%s' % (
             baseurl, eachCommit['commitID'])
@@ -83,7 +84,8 @@ def getIssuesCount(baseurl,listCommits,provider, organization,repository,apiToke
                 issues = getMetrics(baseurl,a.text[21:],provider, organization,repository,apiToken)
                 newIssues+=issues[0]
                 fixedIssues+=issues[1]
-    return [newIssues, fixedIssues]
+                nrCommits+=1
+    return [newIssues, fixedIssues,nrCommits]
 
 def getMetrics(baseurl,commitUUID,provider, organization,repository,apiToken):
     url = '%s/api/v3/analysis/organizations/%s/%s/repositories/%s/commits/%s/deltaStatistics' % (
@@ -123,10 +125,11 @@ def generateReport(baseurl,provider,organization,orgid,apiToken,nrDays):
     totalNewIssues = 0
     totalFixedIssues = 0
     totalIgnoredIssues = 0
+    totalCommits = 0
     repositories = listRepositories(orgid)
     file = open(f'{organization}.csv', 'w')
     writer = csv.writer(file)
-    data = ["Repository","New Issues","Fixed Issues","Ignored Issues"]
+    data = ["Repository","New Issues","Fixed Issues","Ignored Issues","Number of Commits"]
     writer.writerow(data)
     for repo in repositories:
         print("Checking",repo['name'])
@@ -136,9 +139,10 @@ def generateReport(baseurl,provider,organization,orgid,apiToken,nrDays):
         totalIgnoredIssues+=countIgnoredIssues
         totalNewIssues+=countIssues[0]
         totalFixedIssues+=countIssues[1]
-        data = [repo['name'],countIssues[0],countIssues[1],countIgnoredIssues]
+        totalCommits+=countIssues[2]
+        data = [repo['name'],countIssues[0],countIssues[1],countIgnoredIssues,countIssues[2]]
         writer.writerow(data)
-    data = ["TOTAL",totalNewIssues,totalFixedIssues,totalIgnoredIssues]
+    data = ["TOTAL",totalNewIssues,totalFixedIssues,totalIgnoredIssues,totalCommits]
     writer.writerow(data)
     file.close()
 
