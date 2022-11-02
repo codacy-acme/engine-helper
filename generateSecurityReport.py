@@ -14,13 +14,13 @@ def readCookieFile():
         data = myfile.read().replace('\n', '')
         return data
 
-def listRepositories(org):
+def listRepositories(org,baseurl):
     hasNext = True
     pageNumber = 0
     repos = []
     while(hasNext):
-        url = 'https://app.codacy.com/admin/organization/%s/projects?pageNumber=%s' % (
-            org, pageNumber)
+        url = '%s/admin/organization/%s/projects?pageNumber=%s' % (
+            baseurl,org, pageNumber)
         authority = re.sub('http[s]{0,1}://', '', url).split('/')[0]
         headers = {
             'authority': authority,
@@ -43,7 +43,7 @@ def listRepositories(org):
 
 def getIssues(baseurl,provider, organization, apiToken,orgid):
     failedCurl = 0
-    repositories = listRepositories(orgid)
+    repositories = listRepositories(orgid,baseurl)
     for repo in repositories:
         hasNextPage = True
         cursor = ''
