@@ -2,10 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from datetime import timedelta,datetime
+from datetime import timedelta,datetime,date
 import csv
 import argparse
 import time
+from dateutil.relativedelta import relativedelta
 
 def readCookieFile():
     with open('auth.cookie', 'r') as myfile:
@@ -102,7 +103,7 @@ def getMetrics(baseurl,commitUUID,provider, organization,repository,apiToken):
         print("failed to get metrics")
         return [0,0]
 
-def listIgnoredIssues(provider,organization,repository,apiToken):
+def listIgnoredIssues(provider,organization,repository,apiToken,listCommits):
     hasNextPage = True
     cursor = ""
     countIgnoredIssues = 0
@@ -135,7 +136,7 @@ def generateReport(baseurl,provider,organization,orgid,apiToken,nrDays):
         print("Checking",repo['name'])
         listCommits = getCommitsList(baseurl,provider,organization,repo['name'],apiToken,nrDays)
         countIssues = getIssuesCount(baseurl,listCommits,provider, organization,repo['name'],apiToken)
-        countIgnoredIssues = listIgnoredIssues(provider,organization,repo['name'],apiToken)
+        countIgnoredIssues = listIgnoredIssues(provider,organization,repo['name'],apiToken,listCommits)
         totalIgnoredIssues+=countIgnoredIssues
         totalNewIssues+=countIssues[0]
         totalFixedIssues+=countIssues[1]
@@ -161,15 +162,18 @@ def main():
                         help='organization id')
     parser.add_argument('--token', dest='apiToken', default=None,
                         help='the api-token to be used on the REST API')
-    parser.add_argument('--days', dest='nrDays', default=31,
-                        help='number of days')
+    parser.add_argument('--months', dest='nrMonths', default=1,
+                        help='number of months')
     args = parser.parse_args()
 
     print("\nScript is running... take a coffee and enjoy!\n")
 
     startdate = time.time()
 
-    generateReport(args.baseurl,args.provider,args.organization,args.orgid,args.apiToken,args.nrDays)
+    startDateLastMonths = date.today() + relativedelta(months=-int(args.nrMonths))
+    nrDays = (date.today()-startDateLastMonths).days
+
+    generateReport(args.baseurl,args.provider,args.organization,args.orgid,args.apiToken,nrDays)
 
     enddate = time.time()
     print("\nThe script took ",round(enddate-startdate,2)," seconds")
