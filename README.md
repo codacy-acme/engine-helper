@@ -109,12 +109,12 @@ fileFormat argument: it can be used PDF or XLSX
 
 ## Script to generate a report with the performance of all commits for the last x days
 
-This script will generate a CSV file where you can find the new, fixed and ignored issues for all commits in the last x days for every repository across the organization.
+This script will generate a CSV file where you can find the new, fixed and ignored issues for all commits in the last x months for every repository across the organization.
 
 ### Execution
 
 ```bash
-python3 commitsPerformance.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --days {number of days}
+python3 commitsPerformance.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --months {number of months}
 ```
 
 ## Script to update Quality Settings 
