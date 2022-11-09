@@ -98,7 +98,7 @@ def checkMainBranch(baseurl,provider,orgname,repo,token):
         response = requests.get(url,headers=headers)
         branches = json.loads(response.text)
         for branch in branches['data']:
-            if branch['isDefault'] == True:
+            if branch['isDefault'] is True:
                 return branch['name']
         hasNextPage = 'cursor' in branches['pagination']
         if hasNextPage:
