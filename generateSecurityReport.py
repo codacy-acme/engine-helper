@@ -14,13 +14,13 @@ def readCookieFile():
         data = myfile.read().replace('\n', '')
         return data
 
-def listRepositories(org,baseurl):
+def listRepositories(baseurl,orgid):
     hasNext = True
     pageNumber = 0
     repos = []
     while(hasNext):
         url = '%s/admin/organization/%s/projects?pageNumber=%s' % (
-            baseurl,org, pageNumber)
+            baseurl,orgid, pageNumber)
         authority = re.sub('http[s]{0,1}://', '', url).split('/')[0]
         headers = {
             'authority': authority,
@@ -43,33 +43,31 @@ def listRepositories(org,baseurl):
 
 def getIssues(baseurl,provider, organization, apiToken,orgid):
     failedCurl = 0
-    repositories = listRepositories(orgid,baseurl)
+    repositories = listRepositories(baseurl,orgid)
     for repo in repositories:
         hasNextPage = True
         cursor = ''
         tableIssues = []
         repository = repo['name']
         print('Checking issues on the repo',repo['name'])
+        masterBranch = checkMainBranch(baseurl,provider,organization,repo['name'],apiToken)
         headers = {
-                        'content-type': 'application/json',
-                        'api-token': apiToken
+                'content-type': 'application/json',
+                'api-token': apiToken
                 }
-        data = {
-                        "categories": ["Security"]
-                }
+        data = {"branchName": masterBranch, "categories": ["Security"]}
         while(hasNextPage):
             url = f'{baseurl}/api/v3/analysis/organizations/{provider}/{organization}/repositories/{repository}/issues/search?limit=100&{cursor}'
             response = requests.post(url, headers=headers, json=data)
-            time.sleep(2)
             if response.status_code == 200:
                 secIssues = json.loads(response.text)
                 for issue in secIssues['data']:
                     tableIssues.append(
                         {
-                                'id': issue['patternInfo']['id'],
-                                'category': issue['patternInfo']['category'],
-                                'severityLevel': issue['patternInfo']['severityLevel'],
-                                'message': issue['message']
+                            'id': issue['patternInfo']['id'],
+                            'category': issue['patternInfo']['category'],
+                            'severityLevel': issue['patternInfo']['severityLevel'],
+                            'message': issue['message']
                         }
                     )
                 if 'pagination' in secIssues:
@@ -87,6 +85,24 @@ def getIssues(baseurl,provider, organization, apiToken,orgid):
                     failedCurl+=1
         with open('./%s/%s.json' % (organization, repository), 'w') as f:
             f.write(json.dumps(tableIssues))
+
+def checkMainBranch(baseurl,provider,orgname,repo,token):
+    hasNextPage = True
+    cursor = ''
+    while(hasNextPage):
+        url = f"{baseurl}/api/v3/organizations/{provider}/{orgname}/repositories/{repo}/branches?{cursor}"
+        headers = {
+            "accept":"application/json",
+            "api-token":token
+        }
+        response = requests.get(url,headers=headers)
+        branches = json.loads(response.text)
+        for branch in branches['data']:
+            if branch['isDefault'] is True:
+                return branch['name']
+        hasNextPage = 'cursor' in branches['pagination']
+        if hasNextPage:
+            cursor = 'cursor=%s' % branches['pagination']['cursor']
 
 def writeSecurityReportPDF(path_to_repos,json_files_repos,organization):
     countTotalSecurityIssues = 0
@@ -146,7 +162,7 @@ def writeSecurityReportXLSX(path_to_repos,json_files_repos,organization):
     rowSheet1 = 0
     rowSheet2 = 0
     header = ('Repository', 'Critical', 'Medium', 'Minor','Total')
-    header2 = ('Repository', 'Issue')
+    header2 = ('Repository', 'Issue','Severity')
     worksheet.write_row(rowSheet1,0,header,header_format)
     worksheet2.write_row(rowSheet2,0,header2,header_format)
     rowSheet2+=1
@@ -166,6 +182,7 @@ def writeSecurityReportXLSX(path_to_repos,json_files_repos,organization):
             if issue['message'] not in tableSecIssues:
                 tableSecIssues.append(issue['message'])
                 worksheet2.write(rowSheet2, 1, issue['message'],listFormat)
+                worksheet2.write(rowSheet2, 2, issue['severityLevel'],listFormat)
                 rowSheet2+=1
         countTotalSecurityIssues+=countSecurityIssues
         rowSheet1+=1
