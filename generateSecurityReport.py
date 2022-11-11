@@ -53,6 +53,7 @@ def getIssues(baseurl,provider, organization, apiToken,orgid):
         masterBranch = checkMainBranch(baseurl,provider,organization,repo['name'],apiToken)
         headers = {
                 'content-type': 'application/json',
+                'accept': 'application/json',
                 'api-token': apiToken
                 }
         data = {"branchName": masterBranch, "categories": ["Security"]}
