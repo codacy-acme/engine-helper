@@ -3,9 +3,7 @@ import os
 import requests
 import re
 import time
-from reportlab.pdfgen import canvas
 from bs4 import BeautifulSoup
-from datetime import datetime
 import xlsxwriter
 import argparse
 
@@ -50,13 +48,12 @@ def getIssues(baseurl,provider, organization, apiToken,orgid):
         tableIssues = []
         repository = repo['name']
         print('Checking issues on the repo',repo['name'])
-        masterBranch = checkMainBranch(baseurl,provider,organization,repo['name'],apiToken)
         headers = {
                 'content-type': 'application/json',
                 'accept': 'application/json',
                 'api-token': apiToken
                 }
-        data = {"branchName": masterBranch, "categories": ["Security"]}
+        data = {"categories": ["Security"]}
         while(hasNextPage):
             url = f'{baseurl}/api/v3/analysis/organizations/{provider}/{organization}/repositories/{repository}/issues/search?limit=100&{cursor}'
             response = requests.post(url, headers=headers, json=data)
@@ -78,7 +75,7 @@ def getIssues(baseurl,provider, organization, apiToken,orgid):
                 else:
                     hasNextPage = False
             else:
-                print(repository,response.text)
+                print(response.text)
                 if failedCurl == 3:
                     hasNextPage = False
                     failedCurl = 0
@@ -87,72 +84,37 @@ def getIssues(baseurl,provider, organization, apiToken,orgid):
         with open('./%s/%s.json' % (organization, repository), 'w') as f:
             f.write(json.dumps(tableIssues))
 
-def checkMainBranch(baseurl,provider,orgname,repo,token):
+def getOrgs(baseurl,token):
     hasNextPage = True
     cursor = ''
+    listOrgs = []
     while(hasNextPage):
-        url = f"{baseurl}/api/v3/organizations/{provider}/{orgname}/repositories/{repo}/branches?{cursor}"
+        url = f"{baseurl}/api/v3/user/organizations?{cursor}"
         headers = {
             "accept":"application/json",
             "api-token":token
         }
         response = requests.get(url,headers=headers)
-        branches = json.loads(response.text)
-        for branch in branches['data']:
-            if branch['isDefault'] is True:
-                return branch['name']
-        hasNextPage = 'cursor' in branches['pagination']
+        orgs = json.loads(response.text)
+        for org in orgs['data']:
+            listOrgs.append(
+                        {
+                            'name': org['name'],
+                            'provider': org['provider'],
+                            'identifier': org['identifier']
+                        }
+                    )
+        hasNextPage = 'cursor' in orgs['pagination']
         if hasNextPage:
-            cursor = 'cursor=%s' % branches['pagination']['cursor']
+            cursor = 'cursor=%s' % orgs['pagination']['cursor']
+    return listOrgs
 
-def writeSecurityReportPDF(path_to_repos,json_files_repos,organization):
-    countTotalSecurityIssues = 0
-    reportPDF = canvas.Canvas(f'{organization}-securityReport.pdf')
-    y = 800
-    reportPDF.setFont('Helvetica-Bold', 20)
-    reportPDF.drawString(200, y, f"Security Report - {datetime.today().strftime('%d-%m-%Y')}")
-    for jsonFile in json_files_repos:
-        tableSecIssues = []
-        countSecurityIssues = 0
-        countWarning = 0
-        countErrors = 0
-        countMinor = 0
-        issues = json.load(open('%s%s' %(path_to_repos,jsonFile)))
-        reportPDF.setFont('Helvetica-Bold', 15)
-        y-=20
-        reportPDF.drawString(5, y, f'Repository: {jsonFile[:-5]}')
-        reportPDF.setFont('Helvetica', 14)
-        for issue in issues:
-            countWarning = countWarning+1 if issue['severityLevel'] == 'Warning' else countWarning
-            countErrors = countErrors+1 if issue['severityLevel'] == 'Error' else countErrors
-            countMinor = countMinor+1 if issue['severityLevel'] == 'Info' else countMinor
-            countSecurityIssues+=1
-            if issue['id'] not in tableSecIssues:
-                tableSecIssues.append(issue['id'])
-                y-=20
-                reportPDF.drawString(5, y, f"Pattern: {issue['id']}")
-                if y-20 < 100:
-                    reportPDF.showPage()
-                    y = 800
-                    reportPDF.setFont('Helvetica', 14)
-        countTotalSecurityIssues+=countSecurityIssues
-        y-=20
-        reportPDF.drawString(5, y, f'Critical: {countErrors} - Medium: {countWarning} - Minor: {countMinor}')
-        y-=20
-        reportPDF.drawString(5, y, f'Count of security issues: {countSecurityIssues}')
-        if y-20 < 100:
-            reportPDF.showPage()
-            y = 800
-        else:
-            y-=20
-    reportPDF.setFont('Helvetica-Bold', 15)
-    y-=30
-    reportPDF.drawString(5, y, f'Total security issues of organization: {countTotalSecurityIssues}')
-    reportPDF.save()
-
-def writeSecurityReportXLSX(path_to_repos,json_files_repos,organization):
-    countTotalSecurityIssues = 0
-    workbook = xlsxwriter.Workbook(f'./{organization}-securityReport.xlsx')
+def writeSecurityReport(orgs,baseurl,token):
+    allOrgs = (orgs == None)
+    if not allOrgs:
+        targetOrgs = orgs.split(',')
+    list_Orgs = getOrgs(baseurl,token)
+    workbook = xlsxwriter.Workbook('./securityReport.xlsx')
     worksheet = workbook.add_worksheet('CountSecurityIssues')
     worksheet2 = workbook.add_worksheet('listSecurityIssues')
     header_format = workbook.add_format()
@@ -162,34 +124,50 @@ def writeSecurityReportXLSX(path_to_repos,json_files_repos,organization):
     listFormat.set_align('center')
     rowSheet1 = 0
     rowSheet2 = 0
-    header = ('Repository', 'Critical', 'Medium', 'Minor','Total')
-    header2 = ('Repository', 'Issue','Severity')
-    worksheet.write_row(rowSheet1,0,header,header_format)
-    worksheet2.write_row(rowSheet2,0,header2,header_format)
-    rowSheet2+=1
-    for jsonFile in json_files_repos:
-        tableSecIssues = []
-        countSecurityIssues = 0
-        countWarning = 0
-        countErrors = 0
-        countMinor = 0
-        issues = json.load(open('%s%s' %(path_to_repos,jsonFile)))
-        worksheet2.write(rowSheet2, 0, jsonFile[0:-5],listFormat)
-        for issue in issues:
-            countWarning = countWarning+1 if issue['severityLevel'] == 'Warning' else countWarning
-            countErrors = countErrors+1 if issue['severityLevel'] == 'Error' else countErrors
-            countMinor = countMinor+1 if issue['severityLevel'] == 'Info' else countMinor
-            countSecurityIssues+=1
-            if issue['message'] not in tableSecIssues:
-                tableSecIssues.append(issue['message'])
-                worksheet2.write(rowSheet2, 1, issue['message'],listFormat)
-                worksheet2.write(rowSheet2, 2, issue['severityLevel'],listFormat)
-                rowSheet2+=1
-        countTotalSecurityIssues+=countSecurityIssues
-        rowSheet1+=1
-        secInfo = (jsonFile[0:-5],countErrors,countWarning,countMinor,countSecurityIssues)
-        worksheet.write_row(rowSheet1,0,secInfo,listFormat)
-    worksheet.write(rowSheet1+1, 4, countTotalSecurityIssues,listFormat)
+    for org in list_Orgs:
+        if allOrgs or org['name'] in targetOrgs:
+            orgname = org['name']
+            if not os.path.exists(f'./{orgname}'):
+                os.makedirs(f'./{orgname}')
+            getIssues(baseurl,org['provider'],org['name'],token,org['identifier'])
+            path_to_repos = f'{orgname}/'
+            json_files_repos = [pos_json for pos_json in os.listdir(path_to_repos) if pos_json.endswith('.json')]
+            countTotalSecurityIssues = 0
+            orgHeader = ('ORGANIZATION',org['name'])
+            issueHeader = ('Repository', 'Issue','Severity')
+            repoHeader = ('Repository', 'Critical', 'Medium', 'Minor','Total')
+            worksheet.write_row(rowSheet1,0,orgHeader,header_format)
+            worksheet2.write_row(rowSheet2,0,orgHeader,header_format)
+            rowSheet1+=1
+            rowSheet2+=1
+            worksheet.write_row(rowSheet1,0,repoHeader,header_format)
+            worksheet2.write_row(rowSheet2,0,issueHeader,header_format)
+            rowSheet2+=1
+            for jsonFile in json_files_repos:
+                tableSecIssues = []
+                countSecurityIssues = 0
+                countWarning = 0
+                countErrors = 0
+                countMinor = 0
+                issues = json.load(open('%s%s' %(path_to_repos,jsonFile)))
+                worksheet2.write(rowSheet2, 0, jsonFile[0:-5],listFormat)
+                for issue in issues:
+                    countWarning = countWarning+1 if issue['severityLevel'] == 'Warning' else countWarning
+                    countErrors = countErrors+1 if issue['severityLevel'] == 'Error' else countErrors
+                    countMinor = countMinor+1 if issue['severityLevel'] == 'Info' else countMinor
+                    countSecurityIssues+=1
+                    if issue['message'] not in tableSecIssues:
+                        tableSecIssues.append(issue['message'])
+                        worksheet2.write(rowSheet2, 1, issue['message'],listFormat)
+                        worksheet2.write(rowSheet2, 2, issue['severityLevel'],listFormat)
+                        rowSheet2+=1
+                countTotalSecurityIssues+=countSecurityIssues
+                rowSheet1+=1
+                secInfo = (jsonFile[0:-5],countErrors,countWarning,countMinor,countSecurityIssues)
+                worksheet.write_row(rowSheet1,0,secInfo,listFormat)
+            rowSheet1+=1
+            worksheet.write(rowSheet1, 4, countTotalSecurityIssues,listFormat)
+            rowSheet1+=1
     workbook.close()
 
 def main():
@@ -199,36 +177,17 @@ def main():
 
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
                         help='codacy server address (ignore if you use cloud)')
-    parser.add_argument('--provider', dest='provider', default=None,
-                        help='git provider (gh|gl|bb|ghe|gle|bbe')
-    parser.add_argument('--organization', dest='organization',default=None,
-                        help='organization name')
-    parser.add_argument('--orgid', dest='orgid', default=None,
-                        help='organization id')
     parser.add_argument('--token', dest='token', default=None,
                         help='the api-token to be used on the REST API')
-    parser.add_argument('--format', dest='fileFormat', default=None,
-                        help='the format of the report: pdf or xlsx')
+    parser.add_argument('--orgname', dest='orgname', default=None,
+                        help='comma separated list of the organizations, none means all')
     args = parser.parse_args()
 
     print("\nScript is running... take a coffee and enjoy!\n")
 
     startdate = time.time()
 
-    if args.fileFormat.lower() not in ['pdf','xlsx']:
-        print("Wrong format. Use PDF or XLSX")
-        return
-    else:
-        if not os.path.exists(f'./{args.organization}'):
-            os.makedirs(f'./{args.organization}')
-        getIssues(args.baseurl,args.provider,args.organization,args.token,args.orgid)
-        path_to_repos = f'{args.organization}/'
-        json_files_repos = [pos_json for pos_json in os.listdir(path_to_repos) if pos_json.endswith('.json')]
-
-    if args.fileFormat.lower() == 'pdf':
-        writeSecurityReportPDF(path_to_repos,json_files_repos,args.organization)
-    else:
-        writeSecurityReportXLSX(path_to_repos,json_files_repos,args.organization)
+    writeSecurityReport(args.orgname,args.baseurl,args.token)
 
     enddate = time.time()
     print("The script took ",round(enddate-startdate,2)," seconds")

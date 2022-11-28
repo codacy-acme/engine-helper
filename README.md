@@ -96,16 +96,13 @@ python3 main.py --action listengines [--baseurl BASEURL]
 
 ## Script to generate a report with all security issues of organization
 
-This script will generate a report (in PDF or XLSX format) with all security issues you can find on entire organization and
-the list of all security issues per repository
+This script will generate a report (in XLSX format) with all security issues you can find on all organizations you have permission to see or a specific organization and the list of all security issues per repository
 
 ### Execution
 
 ```bash
-python3 generateSecurityReport.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --format {pdf or xlsx}
+python3 generateSecurityReport.py --baseurl {ignore it, if cloud} --orgname {organization names separated by comma or ignore it if you want all organizations} --token {API token}
 ```
-
-fileFormat argument: it can be used PDF or XLSX
 
 ## Script to generate a report with the performance of all commits for the last x days
 
