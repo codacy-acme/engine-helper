@@ -101,7 +101,7 @@ This script will generate a report (in XLSX format) with all security issues you
 ### Execution
 
 ```bash
-python3 generateSecurityReport.py --baseurl {ignore it, if cloud} --orgname {organization name or ignore it if you want to all organizations you have access} --token {API token}
+python3 generateSecurityReport.py --baseurl {ignore it, if cloud} --orgname {organization names separated by comma or ignore it if you want all organizations} --token {API token}
 ```
 
 ## Script to generate a report with the performance of all commits for the last x days
