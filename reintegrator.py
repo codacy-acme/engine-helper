@@ -55,6 +55,29 @@ def findIntegrationId(baseurl, provider, org, repo):
         return gp_integration.get('id').replace('notification-', '')
 
 
+def findCurrentGHEDecoration(baseurl, provider, org, repo):
+    #url = '%s/p/%s/settings/integrations' % (baseurl, repoId)
+    url = '%s/%s/%s/%s/settings/integrations' % (baseurl, provider, org, repo)
+    authority = re.sub('http[s]{0,1}://', '', baseurl)
+    headers = {
+        'authority': authority,
+        'x-requested-with': 'XMLHttpRequest',
+        'cookie': readCookieFile(),
+        'Content-Type': 'application/json'
+    }
+    response = requests.get(url, headers=headers)
+    html_doc = response.text
+    soup = BeautifulSoup(html_doc, 'html.parser')
+    integrations_view = soup.find(id='IntegrationsView')
+    gp_integration = integrations_view.find(class_=re.compile(
+        'integration-(github|gitlab|bitbucket|github-enterprise|gitlab-enterprise|stash)'))
+    GitHubCommitStatus = gp_integration.find(id='pr-status').has_attr('checked')
+    GitHubPullRequestComment = gp_integration.find(id='pr-annotations').has_attr('checked')
+    GitHubPullRequestSummary = gp_integration.find(id='pr-summary').has_attr('checked')
+    GitHubSuggestions = gp_integration.find(id='pr-suggestions').has_attr('checked')
+    return GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions
+
+
 def addIntegration(baseurl, repoId, provider):
     authority = re.sub('http[s]{0,1}://', '', baseurl)
     headers = {
@@ -83,20 +106,45 @@ def deleteIntegration(baseurl, repoId, integrationId):
     response = requests.post(url, headers=headers, data=data)
     print(response)
 
+def generateGHEDecoration(GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions):
+    mappings = """["""
+    carrier = False
+    if GitHubCommitStatus:
+       mappings += ("""{"notificationType":"GitHubCommitStatus","eventType":"PullRequestDeltaCreated","integrationId":INTEGRATION_PLACEHOLDER}""")
+       carrier = True
+    if GitHubPullRequestComment:
+        if carrier:
+            mappings += ","
+        mappings += ("""{"notificationType":"GitHubPullRequestComment","eventType":"PullRequestDeltaCreated","integrationId":INTEGRATION_PLACEHOLDER}""")
+        carrier = True
+    if GitHubPullRequestSummary:
+        if carrier:
+            mappings += ","
+        mappings += ("""{"notificationType":"GitHubPullRequestSummary","eventType":"PullRequestDeltaCreated","integrationId":INTEGRATION_PLACEHOLDER}""")
+        carrier = True
+    if GitHubSuggestions:
+        if carrier:
+            mappings += ","
+        mappings += ("""{"notificationType":"GitHubSuggestions","eventType":"PullRequestDeltaCreated","integrationId":INTEGRATION_PLACEHOLDER}""")
+    mappings += ("""]""")
+    return mappings
 
 def enableIntegration(baseurl, repoId, provider):
     url = '%s/add/addService/redirect/%s/%s' % (baseurl, provider, repoId)
     #print(url)
-    #chrome_path = 'open -a /Applications/Google\ Chrome.app %s'
-    #webbrowser.get(chrome_path).open(url, new=2)
-    webbrowser.open(url, new=2)
+    chrome_path = 'open -a /Applications/Google\ Chrome.app %s'
+    webbrowser.get(chrome_path).open(url, new=2)
+    #webbrowser.open(url, new=2)
     # sleep for browser time
     time.sleep(5)
 
 
 def reintegrate(baseurl, provider, organization, repository, repoId):
-    integrationId = findIntegrationId(
-        baseurl, provider, organization, repository)
+    mappings = []
+    integrationId = findIntegrationId(baseurl, provider, organization, repository)
+    if provider == 'ghe':
+        (GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions) = findCurrentGHEDecoration(baseurl, provider, organization, repository)
+        mappings = generateGHEDecoration(GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions)
     if integrationId != -1:
         deleteIntegration(baseurl, repoId, integrationId)
     addIntegration(baseurl, repoId, provider)
@@ -104,7 +152,8 @@ def reintegrate(baseurl, provider, organization, repository, repoId):
         providerEnable = 'GithubReadOnly'
     else:
         providerEnable = providers[provider]
-    enableIntegration(baseurl, repoId, providerEnable)
+    enableIntegration(baseurl, repoId, providerEnable)        
+    return mappings
 
 
 def reintegrateAll(baseurl, provider, organization, token, which):
@@ -115,10 +164,10 @@ def reintegrateAll(baseurl, provider, organization, token, which):
         targetRepos = which.split(',')
     for repo in repositories:
         if allAboard or repo['name'] in targetRepos:
-            reintegrate(baseurl, provider, organization,
+            mappings = reintegrate(baseurl, provider, organization,
                         repo['name'], repo['repositoryId'])
             enableDecoration(baseurl, provider,
-                            organization, repo['name'], repo['repositoryId'])
+                            organization, repo['name'], repo['repositoryId'], mappings)
 
 
 # TODO: paginate instead of requesting 10000 repos
@@ -142,8 +191,11 @@ def enableAllDecorations(baseurl, provider, organization, token):
         enableDecoration(baseurl, repo['repositoryId'], providers[provider])
 
 
-def enableDecoration(baseurl, provider, organization, repo, repoId):
+        
+
+def enableDecoration(baseurl, provider, organization, repo, repoId, default=''):
     integrationId = findIntegrationId(baseurl, provider, organization, repo)
+
     authority = re.sub('http[s]{0,1}://', '', baseurl)
     headers = {
         'authority': authority,
@@ -163,6 +215,10 @@ def enableDecoration(baseurl, provider, organization, repo, repoId):
     elif(provider == "bb"):
         data = {
             "mappings": """[{"notificationType":"BitbucketCommitStatus","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestComment","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestSummary","eventType":"PullRequestDeltaCreated","integrationId":%s}]"""% (integrationId, integrationId, integrationId)
+        }
+    elif(provider == 'ghe'):
+        data = {
+            "mappings": default.replace('INTEGRATION_PLACEHOLDER', integrationId)
         }
 
     response = requests.post(url, headers=headers, data=json.dumps(data))
