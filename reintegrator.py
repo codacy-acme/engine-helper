@@ -142,11 +142,11 @@ def enableIntegration(baseurl, repoId, provider):
 def reintegrate(baseurl, provider, organization, repository, repoId):
     mappings = []
     integrationId = findIntegrationId(baseurl, provider, organization, repository)
-    if provider == 'ghe':
-        (GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions) = findCurrentGHEDecoration(baseurl, provider, organization, repository)
-        mappings = generateGHEDecoration(GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions)
     if integrationId != -1:
-        deleteIntegration(baseurl, repoId, integrationId)
+        if provider == 'ghe':
+            (GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions) = findCurrentGHEDecoration(baseurl, provider, organization, repository)
+            mappings = generateGHEDecoration(GitHubCommitStatus, GitHubPullRequestComment, GitHubPullRequestSummary, GitHubSuggestions)
+        deleteIntegration(baseurl, repoId, integrationId)    
     addIntegration(baseurl, repoId, provider)
     if(provider == 'gh'):
         providerEnable = 'GithubReadOnly'
