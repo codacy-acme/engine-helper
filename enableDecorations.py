@@ -97,9 +97,10 @@ def main():
                         default=None, help='organization name')
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
                         help='codacy server address (ignore if cloud)')
-    
+
     args = parser.parse_args()
 
     enableAllDecorations(args.baseurl,args.provider, args.organization, args.token,args.reponame)
+
 
 main()
