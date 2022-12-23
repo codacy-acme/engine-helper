@@ -123,3 +123,13 @@ This script will update the Quality Settings for Pull-Requests (you can do the s
 ```bash
 python3 updateQualitySettings.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --orgid {organization id} --token {API token} --reponame {comma separated list of the repositories to be updated, none means all}
 ```
+
+## Script to enable all decorations in Integrations tab
+
+With this script, you'll be able to enable all decorations on the Integrations tab in all your active repositories in Codacy or in specific repositories using the flag --reponame
+
+### Execution
+
+```bash
+python3 enableDecorations.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --token {API token} --reponame {comma separated list of the repositories to be updated, none means all}
+```
