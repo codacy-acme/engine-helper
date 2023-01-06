@@ -133,3 +133,13 @@ With this script, you'll be able to enable all decorations on the Integrations t
 ```bash
 python3 enableDecorations.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --token {API token} --reponame {comma separated list of the repositories to be updated, none means all}
 ```
+
+## Script to add all repositories from Github
+
+With this script, you'll be able to add all repositories into Codacy or specific repositories using the flag --reponame. This script is able to get all repositories directly from the organization on Github 
+
+### Execution
+
+```bash
+python3 addRepositories.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --token {API token on user account} --githubToken {user token from github account}--reponame {comma separated list of the repositories to be updated, none means all}
+```
