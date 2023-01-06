@@ -58,7 +58,7 @@ def main():
     parser.add_argument('--reponame', dest='reponame', default=None,
                         help='comma separated list of the repositories to be added, none means all')
     parser.add_argument('--provider', dest='provider',
-                        default=None, help='git provider (gh|gl|bb|ghe|gle|bbe')
+                        default=None, help='git provider (gh|ghe)')
     parser.add_argument('--organization', dest='organization',
                         default=None, help='organization name')
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
