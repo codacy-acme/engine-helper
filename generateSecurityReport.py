@@ -1,47 +1,23 @@
 import json
 import os
 import requests
-import re
 import time
-from bs4 import BeautifulSoup
 import xlsxwriter
 import argparse
 
-def readCookieFile():
-    with open('auth.cookie', 'r') as myfile:
-        data = myfile.read().replace('\n', '')
-        return data
+def listRepositories(baseurl, provider, organization, token):
+    headers = {
+        'Accept': 'application/json',
+        'api-token': token
+    }
+    url = f'{baseurl}/api/v3/organizations/{provider}/{organization}/repositories?limit=10000'
+    response = requests.get(url, headers=headers)
+    repositories = json.loads(response.text)
+    return repositories['data']
 
-def listRepositories(baseurl,orgid):
-    hasNext = True
-    pageNumber = 0
-    repos = []
-    while(hasNext):
-        url = '%s/admin/organization/%s/projects?pageNumber=%s' % (
-            baseurl,orgid, pageNumber)
-        authority = re.sub('http[s]{0,1}://', '', url).split('/')[0]
-        headers = {
-            'authority': authority,
-            'cookie': readCookieFile()
-        }
-        response = requests.get(url, headers=headers)
-        html_doc = response.text
-        soup = BeautifulSoup(html_doc, 'html.parser')
-        trs = soup.find(class_='new-table').find('tbody').find_all('tr')
-        for tr in trs:
-            tds = tr.find_all('td')
-            if tds[0].text != '\nAccess\nPrivate\n' and tds[0].text != '\nAccess\nPublic\n':
-                repo = {
-                    'name': tds[1].text
-                }
-                repos.append(repo)
-        hasNext = soup.find(class_='fa-angle-right').parent.name == 'a'
-        pageNumber += 1
-    return repos
-
-def getIssues(baseurl,provider, organization, apiToken,orgid):
+def getIssues(baseurl,provider, organization, apiToken):
     failedCurl = 0
-    repositories = listRepositories(baseurl,orgid)
+    repositories = listRepositories(baseurl, provider, organization, apiToken)
     for repo in repositories:
         hasNextPage = True
         cursor = ''
@@ -129,7 +105,7 @@ def writeSecurityReport(orgs,baseurl,token):
             orgname = org['name']
             if not os.path.exists(f'./{orgname}'):
                 os.makedirs(f'./{orgname}')
-            getIssues(baseurl,org['provider'],org['name'],token,org['identifier'])
+            getIssues(baseurl,org['provider'],org['name'],token)
             path_to_repos = f'{orgname}/'
             json_files_repos = [pos_json for pos_json in os.listdir(path_to_repos) if pos_json.endswith('.json')]
             countTotalSecurityIssues = 0
