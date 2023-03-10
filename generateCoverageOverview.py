@@ -1,9 +1,8 @@
 import requests
 import json
-from datetime import timedelta,datetime,date
+from datetime import timedelta,datetime
 import csv
 import time
-from dateutil.relativedelta import relativedelta
 import argparse
 
 def listRepositories(baseurl, provider, organization, token):
@@ -30,11 +29,11 @@ def listRepositories(baseurl, provider, organization, token):
             cursor = 'cursor=%s' % repositories['pagination']['cursor']
     return result
 
-def getCommitsList(baseurl,provider,organization,repository,apiToken,nrdays):
+def getCommitsList(baseurl,provider,organization,repository,apiToken):
     commitIdList = []
     currentDate = datetime.strptime(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S")
-    url = '%s/api/v3/analysis/organizations/%s/%s/repositories/%s/commit-statistics?days=%s' % (
-            baseurl, provider, organization,repository,nrdays)
+    url = '%s/api/v3/analysis/organizations/%s/%s/repositories/%s/commit-statistics?days=90' % (
+            baseurl, provider, organization,repository)
     headers = {
         'Accept': 'application/json',
         'api-token': apiToken
@@ -43,7 +42,7 @@ def getCommitsList(baseurl,provider,organization,repository,apiToken,nrdays):
     commits = json.loads(response.text)
     for eachCommit in commits['data']:
         dateCommit = datetime.strptime(eachCommit['commitTimestamp'], "%Y-%m-%dT%H:%M:%SZ")
-        if (dateCommit >= currentDate-timedelta(days=int(nrdays))):
+        if (dateCommit >= currentDate-timedelta(days=90)):
             if 'coveragePercentageWithDecimals' in eachCommit:
                 commitIdList.append(
                     {
@@ -60,7 +59,7 @@ def generateReport(baseurl,provider,organization,apiToken):
     writeTableCoverageOverview.writerow(headerTableCoverageOverview)
     for repo in repositories:
         print("Checking",repo['name'])
-        commitsList = getCommitsList(baseurl,provider,organization,repo['name'],apiToken,90)
+        commitsList = getCommitsList(baseurl,provider,organization,repo['name'],apiToken)
         if len(commitsList)>0:
             middleIndex = (len(commitsList) - 1)/2
             coverageRow = [repo['name'],str(commitsList[0])[1:-1]+"%",str(commitsList[int(middleIndex)])[1:-1]+"%",str(commitsList[-1])[1:-1]+"%"] 
