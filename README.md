@@ -150,5 +150,5 @@ With this script, you'll be able to see the coverage percentages from the last 3
 ### Execution
 
 ```bash
-python3 generateCoverageOverview.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --token {API token on user account}
+python3 generateCoverageOverview.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account}
 ```
