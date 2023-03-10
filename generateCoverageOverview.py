@@ -41,7 +41,6 @@ def getCommitsList(baseurl,provider,organization,repository,apiToken,nrdays):
     }
     response = requests.get(url,headers = headers)
     commits = json.loads(response.text)
-    print(commits)
     for eachCommit in commits['data']:
         dateCommit = datetime.strptime(eachCommit['commitTimestamp'], "%Y-%m-%dT%H:%M:%SZ")
         if (dateCommit >= currentDate-timedelta(days=int(nrdays))):
