@@ -72,7 +72,7 @@ def generatePRReport(baseurl,provider,organization,repoName,apiToken):
                 pullrequest["deltaCoverageWithDecimals"],pullrequest["diffCoverage"]]
         writeTablePROverview.writerow(PRRow)
     tablePROverview.close()
-    
+
 def main():
     print('Welcome!!\n')
     parser = argparse.ArgumentParser(description='Codacy Integration Helper')
