@@ -152,3 +152,27 @@ With this script, you'll be able to see the coverage percentages from the last 3
 ```bash
 python3 generateCoverageOverview.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account}
 ```
+
+## Script to get Pull Requests Overview from the last 30 days
+
+With this script, you'll be able to generate a report with the following information:
+-> PR Status
+-> Date
+-> PR Id
+-> PR number
+-> PR Title
+-> PR Author
+-> Issues added
+-> Fixed issues
+-> Complexity added
+-> Clones added
+-> Diff Coverage
+-> Delta Coverage
+
+from the last 30 days of a specific repository in your organization
+
+### Execution
+
+```bash
+python3 generateReportPullRequests.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account} --repoName {repository name}
+```
