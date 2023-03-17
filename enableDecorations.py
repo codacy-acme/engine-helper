@@ -30,15 +30,29 @@ def findIntegrationId(baseurl,provider, organization, repo):
         return gp_integration.get('id').replace('notification-', '')
 
 def listRepositories(baseurl, provider, organization, token):
+    hasNextPage = True
+    cursor = ''
+    result = []
     headers = {
         'Accept': 'application/json',
         'api-token': token
     }
-    url = '%s/api/v3/organizations/%s/%s/repositories?limit=10000' % (
-        baseurl, provider, organization)
-    r = requests.get(url, headers=headers)
-    repositories = json.loads(r.text)
-    return repositories['data']
+    while hasNextPage:
+        url = '%s/api/v3/organizations/%s/%s/repositories?limit=100&%s' % (
+            baseurl, provider, organization,cursor)
+        r = requests.get(url, headers=headers)
+        repositories = json.loads(r.text)
+        for repository in repositories['data']:
+            result.append(
+                        {
+                            'name': repository['name'],
+                            'repositoryId': repository['repositoryId']
+                        }
+                )
+        hasNextPage = 'cursor' in repositories['pagination']
+        if hasNextPage:
+            cursor = 'cursor=%s' % repositories['pagination']['cursor']
+    return result
 
 def enableAllDecorations(baseurl,provider, organization, token,which):
     repositories = listRepositories(baseurl,provider, organization, token)

@@ -176,3 +176,13 @@ from the last 30 days of a specific repository in your organization
 ```bash
 python3 generateReportPullRequests.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account} --repoName {repository name}
 ```
+
+## Script to get number of issues per severity of all repositories of organization
+
+With this script, you'll be able to generate a report with all issues per repository by severity.
+
+### Execution
+
+```bash
+python3 generateIssuesReport.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account}
+```

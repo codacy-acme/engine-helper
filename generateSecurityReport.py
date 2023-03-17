@@ -4,16 +4,31 @@ import requests
 import time
 import xlsxwriter
 import argparse
+import shutil
 
 def listRepositories(baseurl, provider, organization, token):
+    hasNextPage = True
+    cursor = ''
+    result = []
     headers = {
         'Accept': 'application/json',
         'api-token': token
     }
-    url = f'{baseurl}/api/v3/organizations/{provider}/{organization}/repositories?limit=10000'
-    response = requests.get(url, headers=headers)
-    repositories = json.loads(response.text)
-    return repositories['data']
+    while hasNextPage:
+        url = '%s/api/v3/organizations/%s/%s/repositories?limit=100&%s' % (
+            baseurl, provider, organization,cursor)
+        r = requests.get(url, headers=headers)
+        repositories = json.loads(r.text)
+        for repository in repositories['data']:
+            result.append(
+                        {
+                            'name': repository['name']
+                        }
+                )
+        hasNextPage = 'cursor' in repositories['pagination']
+        if hasNextPage:
+            cursor = 'cursor=%s' % repositories['pagination']['cursor']
+    return result
 
 def getIssues(baseurl,provider, organization, apiToken):
     failedCurl = 0
@@ -105,6 +120,7 @@ def writeSecurityReport(orgs,baseurl,token):
             orgname = org['name']
             if not os.path.exists(f'./{orgname}'):
                 os.makedirs(f'./{orgname}')
+            print("Checking",orgname)
             getIssues(baseurl,org['provider'],org['name'],token)
             path_to_repos = f'{orgname}/'
             json_files_repos = [pos_json for pos_json in os.listdir(path_to_repos) if pos_json.endswith('.json')]
@@ -144,6 +160,7 @@ def writeSecurityReport(orgs,baseurl,token):
             rowSheet1+=1
             worksheet.write(rowSheet1, 4, countTotalSecurityIssues,listFormat)
             rowSheet1+=1
+            shutil.rmtree(f'./{orgname}')
     workbook.close()
 
 def main():
@@ -153,7 +170,7 @@ def main():
 
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
                         help='codacy server address (ignore if you use cloud)')
-    parser.add_argument('--token', dest='token', default=None,
+    parser.add_argument('--apiToken', dest='apiToken', default=None,
                         help='the api-token to be used on the REST API')
     parser.add_argument('--orgname', dest='orgname', default=None,
                         help='comma separated list of the organizations, none means all')
@@ -163,7 +180,7 @@ def main():
 
     startdate = time.time()
 
-    writeSecurityReport(args.orgname,args.baseurl,args.token)
+    writeSecurityReport(args.orgname,args.baseurl,args.apiToken)
 
     enddate = time.time()
     print("The script took ",round(enddate-startdate,2)," seconds")
