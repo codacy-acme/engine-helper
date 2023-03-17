@@ -30,8 +30,6 @@ def findIntegrationId(baseurl,provider, organization, repo):
         return gp_integration.get('id').replace('notification-', '')
 
 def listRepositories(baseurl, provider, organization, token):
-    if token == None:
-        raise Exception('api-token needs to be defined')
     headers = {
         'Accept': 'application/json',
         'api-token': token
@@ -70,7 +68,7 @@ def enableDecoration(baseurl, provider, organization, repo, repoId, default=''):
         }
     elif(provider == "gh"):
         data = {
-            "mappings": """[{"notificationType": "GitHubCommitStatus","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestComment","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestSummary","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubSuggestions", "eventType": "PullRequestDeltaCreated", "integrationId": %s}]""" % (integrationId, integrationId, integrationId, integrationId)}
+            "mappings": """[{"notificationType": "GitHubCommitStatus","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestComment","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestSummary","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubSuggestions", "eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubCoverageSummary","eventType": "CoverageStatusCreated", "integrationId": %s}]""" % (integrationId, integrationId, integrationId, integrationId, integrationId)}
     elif(provider == "bb"):
         data = {
             "mappings": """[{"notificationType":"BitbucketCommitStatus","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestComment","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestSummary","eventType":"PullRequestDeltaCreated","integrationId":%s}]"""% (integrationId, integrationId, integrationId)
