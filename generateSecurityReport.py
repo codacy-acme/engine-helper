@@ -160,7 +160,7 @@ def writeSecurityReport(orgs,baseurl,token):
             rowSheet1+=1
             worksheet.write(rowSheet1, 4, countTotalSecurityIssues,listFormat)
             rowSheet1+=1
-            shutil.rmtree(f'./{orgname}') 
+            shutil.rmtree(f'./{orgname}')
     workbook.close()
 
 def main():
