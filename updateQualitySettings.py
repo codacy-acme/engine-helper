@@ -1,41 +1,31 @@
 import requests
-import bs4
-import re
+import json
 import time
 import argparse
 
-def readCookieFile():
-    with open('auth.cookie', 'r') as myfile:
-        data = myfile.read().replace('\n', '')
-        return data
-
-def listRepositories(orgname):
-    hasNext = True
-    pageNumber = 0
-    repos = []
-    while(hasNext):
-        url = 'https://app.codacy.com/admin/organization/%s/projects?pageNumber=%s' % (
-            orgname, pageNumber)
-        authority = re.sub('http[s]{0,1}://', '', url).split('/')[0]
-        headers = {
-            'authority': authority,
-            'cookie': readCookieFile()
-        }
-        response = requests.get(url, headers=headers)
-        html_doc = response.text
-        soup = bs4.BeautifulSoup(html_doc, 'html.parser')
-        trs = soup.find(class_='new-table').find('tbody').find_all('tr')
-        for tr in trs:
-            tds = tr.find_all('td')
-            if tds[0].text != '\nAccess\nPrivate\n' and tds[0].text != '\nAccess\nPublic\n':
-                repo = {
-                    'id': tds[0].text,
-                    'name': tds[1].text
-                }
-                repos.append(repo)
-        hasNext = soup.find(class_='fa-angle-right').parent.name == 'a'
-        pageNumber += 1
-    return repos
+def listRepositories(baseurl, provider, organization, token):
+    hasNextPage = True
+    cursor = ''
+    result = []
+    headers = {
+        'Accept': 'application/json',
+        'api-token': token
+    }
+    while hasNextPage:
+        url = '%s/api/v3/organizations/%s/%s/repositories?limit=100&%s' % (
+            baseurl, provider, organization,cursor)
+        r = requests.get(url, headers=headers)
+        repositories = json.loads(r.text)
+        for repository in repositories['data']:
+            result.append(
+                        {
+                            'name': repository['name']
+                        }
+                )
+        hasNextPage = 'cursor' in repositories['pagination']
+        if hasNextPage:
+            cursor = 'cursor=%s' % repositories['pagination']['cursor']
+    return result
 
 def updateQualitySettings(provider,orgname,reponame,gitAction,apiToken):
     headers = {
@@ -67,9 +57,7 @@ def main():
                         help='git provider (gh|gl|bb|ghe|gle|bbe')
     parser.add_argument('--organization', dest='organization',default=None,
                         help='organization name')
-    parser.add_argument('--orgid', dest='orgid', default=None,
-                        help='organization id')
-    parser.add_argument('--token', dest='apiToken', default=None,
+    parser.add_argument('--apiToken', dest='apiToken', default=None,
                         help='the api-token to be used on the REST API')
     parser.add_argument('--reponame', dest='reponame', default=None,
                         help='comma separated list of the repositories to be updated, none means all')
@@ -79,7 +67,7 @@ def main():
 
     startdate = time.time()
 
-    repositories = listRepositories(args.orgid)
+    repositories = listRepositories(args.baseurl, args.provider, args.organization, args.apiToken)
     allRepos = (args.reponame == None)
     targetRepos = []
     if not allRepos:
