@@ -3,7 +3,7 @@ import requests
 import json
 import time
 
-def listRepositoriesfromGithub(orgname,githubToken):
+def listRepositoriesfromGithub(orgname,githubToken,githubBaseURL):
     page = 1
     listRepos = []
     hasNextPage = True
@@ -13,7 +13,7 @@ def listRepositoriesfromGithub(orgname,githubToken):
     }
     
     while(hasNextPage):
-        url = f'https://api.github.com/orgs/{orgname}/repos?page={page}'
+        url = f'{githubBaseURL}/orgs/{orgname}/repos?page={page}'
         response = requests.get(url, headers=headers)
         repos = json.loads(response.text) 
         if len(repos) > 0:
@@ -24,8 +24,8 @@ def listRepositoriesfromGithub(orgname,githubToken):
             hasNextPage = False
     return listRepos
     
-def addAllRepositories(baseurl,provider, organization, token,githubToken,reponame):
-    repositories = listRepositoriesfromGithub(organization,githubToken)
+def addAllRepositories(baseurl,provider, organization, token,githubToken,githubBaseURL,reponame):
+    repositories = listRepositoriesfromGithub(organization,githubToken,githubBaseURL)
     allAboard = (reponame == None)
     targetRepos = []
     if not allAboard:
@@ -63,11 +63,13 @@ def main():
                         default=None, help='organization name')
     parser.add_argument('--baseurl', dest='baseurl', default='https://app.codacy.com',
                         help='codacy server address (ignore if cloud)')
+    parser.add_argument('--githubBaseURL', dest='githubBaseURL', default='https://api.github.com',
+                        help='GitHub API base address (ignore if cloud)')
     args = parser.parse_args()
 
     startdate = time.time()
     
-    addAllRepositories(args.baseurl,args.provider, args.organization, args.token,args.githubToken,args.reponame)
+    addAllRepositories(args.baseurl,args.provider, args.organization, args.token,args.githubToken,args.githubBaseURL,args.reponame)
 
     enddate = time.time()
     print("\nThe script took ",round(enddate-startdate,2)," seconds")

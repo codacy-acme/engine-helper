@@ -140,7 +140,7 @@ With this script, you'll be able to add all repositories into Codacy or specific
 ### Execution
 
 ```bash
-python3 addRepositories.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --token {API token on user account} --githubToken {user token from github account}--reponame {comma separated list of the repositories to be updated, none means all}
+python3 addRepositories.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --token {API token on user account} --githubToken {user token from github account} --reponame {comma separated list of the repositories to be updated, none means all} --githubBaseURL {ignore it, if cloud. For SH instance, you should use http(s)://HOSTNAME/api/v3/}
 ```
 
 ## Script to get Coverage Overview from the last 3 months
