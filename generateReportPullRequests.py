@@ -22,23 +22,23 @@ def getPRList(baseurl,provider,organization,repository,apiToken,typeOfPR):
         if 'data' in pullRequests:
             for eachPullRequest in pullRequests['data']:
                 datePR = datetime.strptime(eachPullRequest['pullRequest']['updated'], "%Y-%m-%dT%H:%M:%SZ")
-                if (datePR >= currentDate-timedelta(days=30)):
-                    result.append(
-                        {
-                        'date':eachPullRequest['pullRequest']['updated'],
-                        'id':eachPullRequest['pullRequest']['id'],
-                        'number':eachPullRequest['pullRequest']['number'],
-                        'title':eachPullRequest['pullRequest']['title'],
-                        'Author':eachPullRequest['pullRequest']['owner']['name'],
-                        'newIssues':eachPullRequest['newIssues'] if 'newIssues' in eachPullRequest else '-',
-                        'fixedIssues':eachPullRequest['fixedIssues']if 'fixedIssues' in eachPullRequest else '-',
-                        'deltaClonesCount':eachPullRequest['deltaClonesCount'] if 'deltaClonesCount' in eachPullRequest else '-',
-                        'deltaComplexity':eachPullRequest['deltaComplexity'] if 'deltaComplexity' in eachPullRequest else '-',
-                        'deltaCoverageWithDecimals':eachPullRequest['deltaCoverageWithDecimals'] if 'deltaCoverageWithDecimals' in eachPullRequest else '-',
-                        'diffCoverage':eachPullRequest['diffCoverage'] if 'diffCoverage' in eachPullRequest else '-',
-                        'typeOfPR': typeOfPR
-                        }
-                    )
+                if (datePR >= currentDate-timedelta(days=93)):
+                            result.append(
+                                {
+                                'date':eachPullRequest['pullRequest']['updated'],
+                                'id':eachPullRequest['pullRequest']['id'],
+                                'number':eachPullRequest['pullRequest']['number'],
+                                'title':eachPullRequest['pullRequest']['title'],
+                                'Author':eachPullRequest['pullRequest']['owner']['name'],
+                                'newIssues':eachPullRequest['newIssues'] if 'newIssues' in eachPullRequest else '-',
+                                'fixedIssues':eachPullRequest['fixedIssues']if 'fixedIssues' in eachPullRequest else '-',
+                                'deltaClonesCount':eachPullRequest['deltaClonesCount'] if 'deltaClonesCount' in eachPullRequest else '-',
+                                'deltaComplexity':eachPullRequest['deltaComplexity'] if 'deltaComplexity' in eachPullRequest else '-',
+                                'deltaCoverageWithDecimals':eachPullRequest['deltaCoverageWithDecimals'] if 'deltaCoverageWithDecimals' in eachPullRequest else '-',
+                                'diffCoverage':eachPullRequest['diffCoverage'] if 'diffCoverage' in eachPullRequest else '-',
+                                'typeOfPR': typeOfPR
+                                }
+                            )
                 else:
                     hasNextPage=False
                     break
@@ -53,7 +53,7 @@ def sortByAuthor(e):
     return e['Author']
 
 def generatePRReport(baseurl,provider,organization,repoName,apiToken):
-    tablePROverview = open(f'{organization}-PROverview-lastMonth.csv', 'w')
+    tablePROverview = open(f'{organization}-{repoName}-PROverview-lastMonth.csv', 'w')
     writeTablePROverview = csv.writer(tablePROverview)
     headerTablePROverview = ["Status","Date","id","number","title","Author","New Issues"
                                                    ,"Fixed Issues","Complexity","Duplication",
