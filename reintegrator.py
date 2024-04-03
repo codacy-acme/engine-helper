@@ -178,7 +178,7 @@ def listRepositories(baseurl, provider, organization, token):
         'Accept': 'application/json',
         'api-token': token
     }
-    url = '%s/api/v3/organizations/%s/%s/repositories?limit=10000' % (
+    url = '%s/api/v3/organizations/%s/%s/repositories?limit=100' % (
         baseurl, provider, organization)
     r = requests.get(url, headers=headers)
     repositories = json.loads(r.text)
