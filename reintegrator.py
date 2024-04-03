@@ -163,35 +163,40 @@ def reintegrateAll(baseurl, provider, organization, token, which):
     if not allAboard:
         targetRepos = which.split(',')
     for repo in repositories:
-        if allAboard or repo['name'] in targetRepos:
-            mappings = reintegrate(baseurl, provider, organization,
-                        repo['name'], repo['repositoryId'])
-            enableDecoration(baseurl, provider,
-                            organization, repo['name'], repo['repositoryId'], mappings)
+       if allAboard or repo['name'] in targetRepos:
+           mappings = reintegrate(baseurl, provider, organization,
+                       repo['name'], repo['repositoryId'])
+           enableDecoration(baseurl, provider,
+                           organization, repo['name'], repo['repositoryId'], mappings)
 
-
-# TODO: paginate instead of requesting 10000 repos
 def listRepositories(baseurl, provider, organization, token):
-    if token == None:
-        raise Exception('api-token needs to be defined')
+    hasNextPage = True
+    cursor = ''
+    result = []
     headers = {
         'Accept': 'application/json',
         'api-token': token
     }
-    url = '%s/api/v3/organizations/%s/%s/repositories?limit=100' % (
-        baseurl, provider, organization)
-    r = requests.get(url, headers=headers)
-    repositories = json.loads(r.text)
-    return repositories['data']
-
+    while hasNextPage:
+        url = f'{baseurl}/api/v3/organizations/{provider}/{organization}/repositories?limit=100&{cursor}'
+        r = requests.get(url, headers=headers)
+        repositories = json.loads(r.text)
+        for repository in repositories['data']:
+                result.append(
+                    {
+                        'name': repository['name'],
+                        'repositoryId': repository['repositoryId']
+                    }
+                )
+        hasNextPage = 'cursor' in repositories['pagination']
+        if hasNextPage:
+            cursor = 'cursor=%s' % repositories['pagination']['cursor']
+    return result
 
 def enableAllDecorations(baseurl, provider, organization, token):
     repositories = listRepositories(baseurl, provider, organization, token)
     for repo in repositories:
         enableDecoration(baseurl, repo['repositoryId'], providers[provider])
-
-
-        
 
 def enableDecoration(baseurl, provider, organization, repo, repoId, default=''):
     integrationId = findIntegrationId(baseurl, provider, organization, repo)
@@ -214,7 +219,7 @@ def enableDecoration(baseurl, provider, organization, repo, repoId, default=''):
             "mappings": """[{"notificationType": "GitHubCommitStatus","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestComment","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubPullRequestSummary","eventType": "PullRequestDeltaCreated", "integrationId": %s},{"notificationType": "GitHubSuggestions", "eventType": "PullRequestDeltaCreated", "integrationId": %s}]""" % (integrationId, integrationId, integrationId, integrationId)}
     elif(provider == "bb"):
         data = {
-            "mappings": """[{"notificationType":"BitbucketCommitStatus","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestComment","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestSummary","eventType":"PullRequestDeltaCreated","integrationId":%s}]"""% (integrationId, integrationId, integrationId)
+            "mappings": """[{"notificationType":"BitbucketCommitStatus","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestComment","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketAIEnhancedComments","eventType":"PullRequestDeltaCreated","integrationId":%s},{"notificationType":"BitbucketPullRequestSummary","eventType":"PullRequestDeltaCreated","integrationId":%s}]"""% (integrationId, integrationId, integrationId,integrationId)
         }
     elif(provider == 'ghe'):
         data = {
