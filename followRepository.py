@@ -3,52 +3,36 @@ import requests
 import json
 import time
 
-def fetchRepositories(baseurl, provider, organization, token):
-    """Fetch a list of all repositories in the organization that can be followed.
-    
-    Args:
-        baseurl (str): The base URL for the Codacy API.
-        provider (str): The git provider (e.g., 'gh' for GitHub, 'gl' for GitLab).
-        organization (str): The organization name.
-        token (str): The API token for Codacy.
-        
-    Returns:
-        list: A list of repository names.
-    """
+def listRepositories(baseurl, provider, organization, token):
+    hasNextPage = True
+    cursor = ''
+    result = []
     headers = {
         'Accept': 'application/json',
         'api-token': token
     }
-    url = f'{baseurl}/api/v3/organizations/{provider}/{organization}/repositories'
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
+    while hasNextPage:
+        url = f"{baseurl}/api/v3/organizations/{provider}/{organization}/repositories?limit=100&{cursor}"
+        response = requests.get(url, headers=headers)
         repositories = response.json()
-        # Assuming each repository info is contained in a dict with a 'name' key
-        return [repo['name'] for repo in repositories['data']]  # Adjust based on actual response structure
-    else:
-        print(f'Failed to fetch repositories: {response.status_code}, Response: {response.text}')
-        return []
+        for repository in repositories['data']:
+            result.append({'name': repository['name']})
+        hasNextPage = 'cursor' in repositories['pagination']
+        if hasNextPage:
+            cursor = f"cursor={repositories['pagination']['cursor']}"
+    return result
 
 def followAddedRepository(baseurl, provider, organization, repo, token):
-    """Follow a repository that was already added to Codacy.
-    
-    Args:
-        baseurl (str): The base URL for the Codacy API.
-        provider (str): The git provider (e.g., 'gh' for GitHub, 'gl' for GitLab).
-        organization (str): The organization name.
-        repo (str): The repository name to be followed.
-        token (str): The API token for Codacy.
-    """
     headers = {
         'Accept': 'application/json',
         'api-token': token
     }
-    url = f'{baseurl}/api/v3/organizations/{provider}/{organization}/repositories/{repo}/follow'
+    url = f"{baseurl}/api/v3/organizations/{provider}/{organization}/repositories/{repo}/follow"
     response = requests.post(url, headers=headers)
     if response.status_code == 200:
-        print(f'Successfully followed {repo}')
+        print(f"Successfully followed {repo}")
     else:
-        print(f'Failed to follow {repo}: {response.status_code}, Response: {response.text}')
+        print(f"Failed to follow {repo}: {response.status_code}, Response: {response.text}")
 
 def main():
     parser = argparse.ArgumentParser(description='Codacy Repository Auto-Follow')
@@ -61,9 +45,9 @@ def main():
 
     start_time = time.time()
     
-    repositories = fetchRepositories(args.baseurl, args.provider, args.organization, args.token)
+    repositories = listRepositories(args.baseurl, args.provider, args.organization, args.token)
     for repo in repositories:
-        followAddedRepository(args.baseurl, args.provider, args.organization, repo, args.token)
+        followAddedRepository(args.baseurl, args.provider, args.organization, repo['name'], args.token)
 
     end_time = time.time()
     print(f"\nThe script took {round(end_time - start_time, 2)} seconds")
