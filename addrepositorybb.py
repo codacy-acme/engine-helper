@@ -2,10 +2,14 @@ import argparse
 import requests
 import json
 import time
+import base64
 
-def test_bitbucket_auth(workspace, bitbucketToken):
+def test_bitbucket_auth(workspace, bitbucketUsername, bitbucketAppPassword):
+    credentials = f"{bitbucketUsername}:{bitbucketAppPassword}"
+    encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+    
     headers = {
-        'Authorization': f'Bearer {bitbucketToken}',
+        'Authorization': f'Basic {encoded_credentials}',
         'Accept': 'application/json'
     }
     
@@ -24,13 +28,16 @@ def test_bitbucket_auth(workspace, bitbucketToken):
         print(f"Response: {response.text}")
         return False
 
-def listRepositoriesFromBitbucket(workspace, bitbucketToken):
+def listRepositoriesFromBitbucket(workspace, bitbucketUsername, bitbucketAppPassword):
     page = 1
     listRepos = []
     hasNextPage = True
     
+    credentials = f"{bitbucketUsername}:{bitbucketAppPassword}"
+    encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+    
     headers = {
-        'Authorization': f'Bearer {bitbucketToken}',
+        'Authorization': f'Basic {encoded_credentials}',
         'Accept': 'application/json'
     }
     
@@ -58,8 +65,8 @@ def listRepositoriesFromBitbucket(workspace, bitbucketToken):
     
     return listRepos
 
-def addAllRepositories(baseurl, provider, organization, token, bitbucketToken, reponame):
-    repositories = listRepositoriesFromBitbucket(organization, bitbucketToken)
+def addAllRepositories(baseurl, provider, organization, token, bitbucketUsername, bitbucketAppPassword, reponame):
+    repositories = listRepositoriesFromBitbucket(organization, bitbucketUsername, bitbucketAppPassword)
     allAboard = (reponame == None)
     targetRepos = []
     if not allAboard:
@@ -87,8 +94,10 @@ def main():
     parser = argparse.ArgumentParser(description='Codacy Integration Helper')
     parser.add_argument('--token', dest='token', default=None,
                         help='the api-token to be used on the Codacy REST API')
-    parser.add_argument('--bitbucketToken', dest='bitbucketToken', default=None,
-                        help='the Bitbucket access token')
+    parser.add_argument('--bitbucketUsername', dest='bitbucketUsername', default=None,
+                        help='the Bitbucket username')
+    parser.add_argument('--bitbucketAppPassword', dest='bitbucketAppPassword', default=None,
+                        help='the Bitbucket app password')
     parser.add_argument('--reponame', dest='reponame', default=None,
                         help='comma separated list of the repositories to be added, none means all')
     parser.add_argument('--provider', dest='provider',
@@ -99,20 +108,20 @@ def main():
                         help='codacy server address (ignore if cloud)')
     args = parser.parse_args()
 
-    if not args.token or not args.bitbucketToken or not args.organization:
-        print("Error: Codacy API token, Bitbucket access token, and organization (workspace) are required.")
+    if not args.token or not args.bitbucketUsername or not args.bitbucketAppPassword or not args.organization:
+        print("Error: Codacy API token, Bitbucket username, Bitbucket app password, and organization (workspace) are required.")
         parser.print_help()
         return
 
     print("Testing Bitbucket authentication...")
-    if not test_bitbucket_auth(args.organization, args.bitbucketToken):
-        print("Authentication test failed. Please check your access token and try again.")
+    if not test_bitbucket_auth(args.organization, args.bitbucketUsername, args.bitbucketAppPassword):
+        print("Authentication test failed. Please check your credentials and try again.")
         return
 
     startdate = time.time()
     
     addAllRepositories(args.baseurl, args.provider, args.organization, args.token,
-                       args.bitbucketToken, args.reponame)
+                       args.bitbucketUsername, args.bitbucketAppPassword, args.reponame)
 
     enddate = time.time()
     print("\nThe script took", round(enddate-startdate, 2), "seconds")
