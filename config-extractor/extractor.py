@@ -1,11 +1,9 @@
 import requests
 import yaml
-import json
 import os
 import argparse
 import time
 from typing import List, Dict, Optional
-from collections import Counter
 from tqdm import tqdm
 
 # Codacy API configuration
@@ -115,7 +113,6 @@ def get_user_selected_languages(available_languages: List[str]) -> List[str]:
 
 def create_semgrep_config(patterns: List[Dict], selected_languages: List[str]) -> Dict:
     rules = []
-    language_rule_count = Counter()
 
     for pattern in tqdm(patterns, desc="Creating Semgrep config", unit=" patterns"):
         pattern_def = pattern.get("patternDefinition", {})
@@ -125,31 +122,17 @@ def create_semgrep_config(patterns: List[Dict], selected_languages: List[str]) -
             continue
         
         rule = {
-            "id": pattern_def.get("id", "unknown_id"),
-            "message": f"{pattern_def.get('title', '')}\n{pattern_def.get('description', '')}",
-            "severity": pattern_def.get("level", "").lower(),
-            "metadata": {
-                "category": pattern_def.get("category", ""),
-                "subcategory": pattern_def.get("subCategory", ""),
-                "explanation": pattern_def.get("explanation", ""),
-            },
+            "id": f"Semgrep_codacy.{pattern_def.get('id', 'unknown_id')}",
             "languages": list(pattern_languages.intersection(selected_languages)),
         }
         
-        parameters = pattern_def.get("parameters", [])
-        if parameters:
-            rule["parameters"] = parameters
-        
         rules.append(rule)
-        
-        for lang in rule["languages"]:
-            language_rule_count[lang] += 1
     
-    return {"rules": rules}, language_rule_count
+    return {"rules": rules}
 
 def save_semgrep_config(config: Dict, filename: str = "semgrep_config.yaml"):
     with open(filename, "w") as f:
-        yaml.dump(config, f, default_flow_style=False)
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
 def main():
     parser = argparse.ArgumentParser(description="Generate Semgrep configuration from Codacy API")
@@ -204,15 +187,13 @@ def main():
         selected_languages = get_user_selected_languages(available_languages)
         print(f"Selected languages: {', '.join(selected_languages)}")
 
-        # 8. Create the Semgrep YAML
-        semgrep_config, language_rule_count = create_semgrep_config(enabled_patterns, selected_languages)
+        # 8. Create the simplified Semgrep YAML
+        semgrep_config = create_semgrep_config(enabled_patterns, selected_languages)
         save_semgrep_config(semgrep_config)
-        print(f"Semgrep configuration has been saved to semgrep_config.yaml")
+        print(f"Simplified Semgrep configuration has been saved to semgrep_config.yaml")
         
-        # 9. Print rule count per language
-        print("\nRules added to config file per language:")
-        for lang, count in language_rule_count.items():
-            print(f"{lang.capitalize()} - {count} rules")
+        # 9. Print total number of rules
+        print(f"\nTotal rules added to config file: {len(semgrep_config['rules'])}")
 
     except requests.RequestException as e:
         print(f"Error accessing Codacy API: {e}")
