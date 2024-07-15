@@ -17,7 +17,7 @@ This script automates the process of migrating a coding standard from a self-hos
 
 ## Setup
 
-1. Clone this repository or download the `codacy_migration.py` script.
+1. Clone this repository or download the `cs-extractor-importer.py` script.
 2. Install the required Python library:
    ```
    pip install requests
@@ -43,7 +43,7 @@ Replace the placeholders with your specific values:
 ## Example
 
 ```
-python codacy_migration.py -p gh -o my-self-hosted-org -c my-cloud-org
+python cs-extractor-importer.py -p gh -o my-self-hosted-org -c my-cloud-org
 ```
 
 ## Notes
