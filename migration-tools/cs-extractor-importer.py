@@ -352,9 +352,70 @@ def update_cloud_coding_standard(provider: str, cloud_org_name: str, standard_id
     """Update cloud coding standard with source configuration."""
     for cloud_tool_uuid, tool_data in source_data["tool_patterns"].items():
         cloud_tool_name = tool_data["name"]
-        patterns = tool_data["patterns"]
-        print(f"Processing tool: {cloud_tool_name}")
+        desired_patterns = tool_data["patterns"]
+        print(f"\nProcessing tool: {cloud_tool_name}")
         
+        base_url = f"{CLOUD_API_URL}/organizations/{provider}/{cloud_org_name}/coding-standards/{standard_id}/tools/{cloud_tool_uuid}"
+        
+        # Step 1: Enable the tool
+        print("Enabling tool...")
+        enable_data = {
+            "enabled": True,
+            "patterns": []
+        }
+        result = make_api_request(base_url, method="PATCH", data=enable_data)
+        if not result:
+            print(f"Failed to enable tool {cloud_tool_name}")
+            continue
+        
+        time.sleep(1)  # Rate limiting
+        
+        # Step 2: Get all currently enabled patterns
+        print("Getting current patterns...")
+        current_patterns = []
+        cursor = None
+        
+        while True:
+            params = {"cursor": cursor} if cursor else None
+            patterns_response = make_api_request(f"{base_url}/patterns", params=params)
+            
+            if not patterns_response or not patterns_response.get("data"):
+                break
+                
+            # Add patterns from this page
+            current_patterns.extend([
+                {"id": pattern["patternDefinition"]["id"], "enabled": False}
+                for pattern in patterns_response["data"]
+                if pattern.get("enabled", False)
+            ])
+            
+            # Check for more pages
+            pagination = patterns_response.get("pagination", {})
+            cursor = pagination.get("cursor")
+            if not cursor or cursor == "0":
+                break
+                
+            time.sleep(1)  # Rate limiting
+        
+        print(f"Found {len(current_patterns)} currently enabled patterns")
+        
+        # Step 3: Disable all current patterns
+        if current_patterns:
+            print("Disabling all current patterns...")
+            disable_data = {
+                "enabled": True,
+                "patterns": current_patterns  # All patterns with enabled: False
+            }
+            
+            result = make_api_request(base_url, method="PATCH", data=disable_data)
+            if not result:
+                print(f"Failed to disable existing patterns for {cloud_tool_name}")
+                continue
+                
+            time.sleep(1)  # Rate limiting
+        
+        # Step 4: Enable our desired patterns
+        print(f"Updating with {len(desired_patterns)} specific patterns...")
         update_data = {
             "enabled": True,
             "patterns": [
@@ -362,16 +423,14 @@ def update_cloud_coding_standard(provider: str, cloud_org_name: str, standard_id
                     "id": p["patternDefinition"]["id"],
                     "enabled": True,
                     "parameters": p.get("parameters", [])
-                } for p in patterns
+                } for p in desired_patterns
             ]
         }
 
-        url = f"{CLOUD_API_URL}/organizations/{provider}/{cloud_org_name}/coding-standards/{standard_id}/tools/{cloud_tool_uuid}"
-        print(f"Updating tool with {len(patterns)} patterns")
-        result = make_api_request(url, method="PATCH", data=update_data)
+        result = make_api_request(base_url, method="PATCH", data=update_data)
         
         if result is True or result is not None:
-            print(f"Successfully updated configuration and {len(patterns)} patterns for tool {cloud_tool_name}")
+            print(f"Successfully updated configuration and patterns for tool {cloud_tool_name}")
         else:
             print(f"Failed to update configuration and patterns for tool {cloud_tool_name}")
         
