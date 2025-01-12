@@ -1,67 +1,123 @@
-# Codacy Migration Script
+# Codacy Coding Standards Migration Tool
 
-## Overview
+A Python script to migrate coding standards between Codacy environments. This tool supports:
+- Self-Hosted Codacy to Codacy Cloud migration
+- Codacy Cloud to Codacy Cloud migration (between organizations)
 
-This script automates the process of migrating a coding standard from a self-hosted Codacy instance to Codacy Cloud. It performs the following steps:
+## Features
 
-1. Fetches the coding standard data from the self-hosted Codacy instance.
-2. Creates a new coding standard in Codacy Cloud with the same languages as the self-hosted standard.
-3. Disables all tools that are enabled by default in the new Codacy Cloud standard.
-4. Updates the new coding standard with the tools and patterns from the self-hosted instance.
-5. Promotes the new coding standard in Codacy Cloud.
+- Interactive standard selection
+- Multiple destination organization support
+- Proper tool and pattern migration
+- Handles pagination for large pattern sets
+- Preserves tool configurations and pattern parameters
+- Supports both self-hosted and cloud-to-cloud migrations
+- Progress tracking and detailed logging
 
-## Requirements
+## Prerequisites
 
-- Python 3.6 or higher
-- `requests` library (can be installed via `pip install requests`)
+- Python 3.6+
+- Required Python packages:
+  ```bash
+  pip install requests
+  pip install halo
+  ```
+- Access tokens:
+  - For Self-Hosted to Cloud migration: Both self-hosted and cloud API tokens
+  - For Cloud to Cloud migration: Codacy cloud API token
 
-## Setup
+## Environment Variables
 
-1. Clone this repository or download the `cs-extractor-importer.py` script.
-2. Install the required Python library:
-   ```
-   pip install requests
-   ```
-3. Set up the following environment variables:
-   - `SELF_HOSTED_API_URL`: The API URL of your self-hosted Codacy instance 
-   - `SELF_HOSTED_API_TOKEN`: The API token for your self-hosted Codacy instance
-   - `CLOUD_API_TOKEN`: The API token for your Codacy Cloud instance
+Set the following environment variables before running the script:
+
+For Self-Hosted to Cloud migration:
+```bash
+export SELF_HOSTED_API_TOKEN="your-self-hosted-token"
+export CLOUD_API_TOKEN="your-cloud-token"
+export SELF_HOSTED_API_URL="https://codacy.your-domain.com/api/v3"  # Optional, defaults to https://codacy.mycompany.com/api/v3
+```
+
+For Cloud to Cloud migration:
+```bash
+export CLOUD_API_TOKEN="your-cloud-token"
+```
 
 ## Usage
 
-Run the script with the following command:
-
-```
-python codacy_migration.py -p <provider> -o <self-hosted-org> -c <cloud-org>
-```
-
-Replace the placeholders with your specific values:
-- `<provider>`: The Git provider (e.g., "gh" for GitHub, "gl" for GitLab)
-- `<self-hosted-org>`: The organization name in your self-hosted Codacy instance
-- `<cloud-org>`: The organization name in Codacy Cloud
-
-## Example
-
-```
-python cs-extractor-importer.py -p gh -o my-self-hosted-org -c my-cloud-org
+Run the script:
+```bash
+python script.py
 ```
 
-## Notes
+The script will guide you through:
+1. Selecting migration mode (Self-Hosted to Cloud or Cloud to Cloud)
+2. Choosing the provider (gh for GitHub, gl for GitLab, bb for BitBucket)
+3. Entering source organization name
+4. Entering destination organization(s)
+5. Selecting the coding standard to migrate
 
-- The script will create a new coding standard in Codacy Cloud with the name "Migrated: [Original Standard Name]".
-- All default tools in the new Codacy Cloud standard will be disabled before migrating the self-hosted configuration.
-- Only enabled tools and patterns from the self-hosted instance will be migrated to the Cloud standard.
-- The script includes error handling and will print informative messages during the migration process.
+## Migration Process
+
+The tool follows these steps for each destination:
+
+1. **Setup Phase**
+   - Validates environment variables
+   - Fetches source coding standard details
+   - Gets list of enabled tools and their patterns
+
+2. **Creation Phase**
+   - Creates new coding standard in destination
+   - Sets proper language configuration
+
+3. **Tool Configuration Phase**
+   For each tool:
+   - Enables the tool
+   - Gets all currently enabled patterns (handling pagination)
+   - Disables any auto-enabled patterns
+   - Updates with specific source patterns
+
+4. **Finalization Phase**
+   - Promotes the standard to make it active
+
+## Error Handling
+
+The script includes comprehensive error handling for:
+- API connection issues
+- Missing environment variables
+- Invalid organization names
+- Pattern migration failures
+- Pagination errors
+
+## Limitations
+
+- Cannot modify tools not available in destination environment
+- Some tool configurations may need manual review
+- API rate limiting may affect large migrations
+- Tool configurations are environment-specific
 
 ## Troubleshooting
 
-If you encounter any issues:
-1. Ensure all environment variables are correctly set.
-2. Check that your API tokens have the necessary permissions.
-3. Verify that your self-hosted Codacy instance is accessible and that the Codacy Cloud API is available.
+Common issues and solutions:
 
-For any persistent issues, please check the error messages in the console output and consult the Codacy documentation or support channels.
+1. **Authentication Errors**
+   - Verify environment variables are set correctly
+   - Ensure tokens have proper permissions
+   - Check token validity
 
-## Disclaimer
+2. **Pattern Migration Issues**
+   - Verify source patterns are enabled
+   - Check tool compatibility between environments
+   - Review pattern IDs in both environments
 
-This script is provided as-is. Always test the migration process in a non-production environment before using it on your main Codacy instance.
+3. **Rate Limiting**
+   - Script includes built-in delays between requests
+   - Adjust sleep duration if needed
+
+4. **Missing Tools**
+   - Verify tool availability in destination
+   - Check tool name mappings
+   - Review tool compatibility
+
+## Contributing
+
+Feel free to submit issues, fork the repository, and create pull requests for any improvements.
