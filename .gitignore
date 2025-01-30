@@ -132,3 +132,5 @@ dmypy.json
 # App related
 auth.cookie
 patterns.json
+data/
+.DS_Store

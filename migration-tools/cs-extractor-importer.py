@@ -36,7 +36,7 @@ def make_api_request(url: str, method: str = "GET", headers: Dict = None,
     headers["api-token"] = CLOUD_API_TOKEN if url.startswith(CLOUD_API_URL) else SELF_HOSTED_API_TOKEN
 
     try:
-        response = requests.request(method, url, headers=headers, json=data, params=params)
+        response = requests.request(method, url, headers=headers, json=data, params=params, timeout=1000)
         response.raise_for_status()
         
         if response.status_code == 204:  # No Content
@@ -289,6 +289,12 @@ def get_source_cloud_data(provider: str, source_org_name: str) -> Optional[Dict[
                     "patterns": all_patterns
                 }
                 print(f"Found {len(all_patterns)} patterns for tool {tool.get('name', tool_uuid)}")
+            else:
+                comprehensive_data["tool_patterns"][tool_uuid] = {
+                    "name": tool.get("name", f"Tool_{tool_uuid}"),
+                    "patterns": []
+                }
+                print(f"No patterns found for tool {tool.get('name', tool_uuid)}")
             
         return comprehensive_data
         
@@ -309,7 +315,7 @@ def create_cloud_coding_standard(provider: str, cloud_org_name: str,
             languages = ["Java"]
 
         new_standard_data = {
-            "name": f"Migrated: {source_data['coding_standard'].get('name', 'Unknown')}",
+            "name": f"Migrated: {source_data['coding_standard'].get('name', 'Unknown')}_{int(time.time())}",
             "languages": languages
         }
 
@@ -399,6 +405,7 @@ def update_cloud_coding_standard(provider: str, cloud_org_name: str, standard_id
         
         print(f"Found {len(current_patterns)} currently enabled patterns")
         
+        
         # Step 3: Disable all current patterns
         if current_patterns:
             print("Disabling all current patterns...")
@@ -412,29 +419,39 @@ def update_cloud_coding_standard(provider: str, cloud_org_name: str, standard_id
                 print(f"Failed to disable existing patterns for {cloud_tool_name}")
                 continue
                 
-            time.sleep(1)  # Rate limiting
+            time.sleep(3)  # Rate limiting
         
         # Step 4: Enable our desired patterns
         print(f"Updating with {len(desired_patterns)} specific patterns...")
-        update_data = {
-            "enabled": True,
-            "patterns": [
-                {
-                    "id": p["patternDefinition"]["id"],
-                    "enabled": True,
-                    "parameters": p.get("parameters", [])
-                } for p in desired_patterns
-            ]
-        }
+        
+        # Process patterns in batches of 200
+        batch_size = 200
+        for i in range(0, len(desired_patterns), batch_size):
+            batch = desired_patterns[i:i + batch_size + 1]
+            print(f"Processing batch of {len(batch)} patterns... from {i} to {i + batch_size}")
+            
+            update_data = {
+                "enabled": True,
+                "patterns": [
+                    {
+                        "id": p["patternDefinition"]["id"],
+                        "enabled": True,
+                        "parameters": p.get("parameters", [])
+                    } for p in batch
+                ]
+            }
 
-        result = make_api_request(base_url, method="PATCH", data=update_data)
+            result = make_api_request(base_url, method="PATCH", data=update_data)
+            
+            if result is True or result is not None:
+                print(f"Successfully updated batch of {len(batch)} patterns for tool {cloud_tool_name}")
+            else:
+                print(f"Failed to update batch of {len(batch)} patterns for tool {cloud_tool_name}")
+                break
+                
+            time.sleep(10)  # Rate limiting between batches
         
-        if result is True or result is not None:
-            print(f"Successfully updated configuration and patterns for tool {cloud_tool_name}")
-        else:
-            print(f"Failed to update configuration and patterns for tool {cloud_tool_name}")
-        
-        time.sleep(1)
+        time.sleep(5)
 
 def promote_coding_standard(provider: str, cloud_org_name: str, standard_id: str) -> bool:
     """Promote the coding standard to make it the default."""
@@ -471,7 +488,7 @@ def migrate_to_destinations(provider: str, source_data: Dict[str, Any],
             # Then update with source configuration
             print("Updating coding standard with source configuration...")
             update_cloud_coding_standard(provider, dest_org, cloud_standard["id"], source_data)
-            
+            time.sleep(5)
             # Finally promote the standard
             promote_coding_standard(provider, dest_org, cloud_standard["id"])
             
