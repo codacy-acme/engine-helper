@@ -1027,8 +1027,8 @@ def migrate_to_destinations(provider: str, source_data: Dict[str, Any], dest_org
             # Step 4: Validate migration
             validation_result = validate_migration(provider, dest_org, standard_id, source_data)
             
-            # Step 5: Promote if requested and validation passed
-            if make_default and validation_result:
+            # Step 5: Promote if requested (regardless of validation result)
+            if make_default:
                 logger.info(f"Promoting coding standard for {dest_org}")
                 promote_result = promote_coding_standard(provider, dest_org, standard_id)
                 if not promote_result:
