@@ -882,21 +882,56 @@ def update_cloud_coding_standard(provider: str, cloud_org_name: str, standard_id
         print(f"Found {len(current_patterns)} currently enabled patterns")
         
         
-        # Step 3: Disable all current patterns
+        # Step 3: Disable all current patterns in smaller batches to avoid request size limits
         if current_patterns:
-            print("Disabling all current patterns...")
-            disable_data = {
-                "enabled": True,
-                "patterns": current_patterns  # All patterns with enabled: False
-            }
+            print(f"Disabling all {len(current_patterns)} current patterns in batches...")
             
-            result = make_api_request(base_url, method="PATCH", data=disable_data)
-            if not result:
-                logger.error(f"Failed to disable existing patterns for {cloud_tool_name}")
-                print(f"Failed to disable existing patterns for {cloud_tool_name}")
+            # Use a smaller batch size for disabling to avoid request size limits
+            disable_batch_size = 50
+            disable_failed = False
+            
+            for i in range(0, len(current_patterns), disable_batch_size):
+                batch = current_patterns[i:i+disable_batch_size]
+                batch_num = i//disable_batch_size + 1
+                total_batches = (len(current_patterns) + disable_batch_size - 1)//disable_batch_size
+                print(f"Disabling batch {batch_num}/{total_batches} ({len(batch)} patterns)...")
+                
+                disable_data = {
+                    "enabled": True,
+                    "patterns": batch  # Batch of patterns with enabled: False
+                }
+                
+                # Try up to 3 times for each batch
+                success = False
+                for attempt in range(1, 4):
+                    if attempt > 1:
+                        print(f"Retry attempt {attempt} for disabling batch {batch_num}...")
+                    
+                    result = make_api_request(base_url, method="PATCH", data=disable_data)
+                    if result:
+                        logger.info(f"Successfully disabled {len(batch)} patterns (batch {batch_num})")
+                        print(f"Successfully disabled {len(batch)} patterns (batch {batch_num})")
+                        success = True
+                        break
+                    else:
+                        logger.warning(f"Failed to disable patterns (batch {batch_num}, attempt {attempt})")
+                        print(f"Failed to disable patterns (batch {batch_num}, attempt {attempt})")
+                        time.sleep(3)  # Wait between retries
+                
+                if not success:
+                    logger.error(f"Failed to disable patterns batch {batch_num} after all attempts")
+                    print(f"Failed to disable patterns batch {batch_num} after all attempts")
+                    disable_failed = True
+                    break  # Stop trying to disable more patterns if a batch fails
+                
+                time.sleep(2)  # Rate limiting between batches
+            
+            if disable_failed:
+                logger.error(f"Failed to disable all existing patterns for {cloud_tool_name}")
+                print(f"Failed to disable all existing patterns for {cloud_tool_name}")
                 continue
                 
-            time.sleep(3)  # Rate limiting
+            time.sleep(3)  # Additional rate limiting before enabling patterns
         
         # Step 4: Enable our desired patterns
         print(f"Updating with {len(desired_patterns)} specific patterns...")
@@ -1027,13 +1062,15 @@ def migrate_to_destinations(provider: str, source_data: Dict[str, Any], dest_org
             # Step 4: Validate migration
             validation_result = validate_migration(provider, dest_org, standard_id, source_data)
             
-            # Step 5: Promote if requested (regardless of validation result)
-            if make_default:
-                logger.info(f"Promoting coding standard for {dest_org}")
-                promote_result = promote_coding_standard(provider, dest_org, standard_id)
-                if not promote_result:
-                    logger.warning(f"Failed to promote coding standard for {dest_org}")
-                    print(f"Failed to promote coding standard for {dest_org}")
+            # Step 5: Always promote the draft coding standard to an effective one
+            # Note: The promotion API also makes it the default if it was marked as default
+            # So we only promote if make_default is true OR we're not making it default
+            # This ensures we don't accidentally make a non-default standard the default
+            logger.info(f"Promoting coding standard for {dest_org}")
+            promote_result = promote_coding_standard(provider, dest_org, standard_id)
+            if not promote_result:
+                logger.warning(f"Failed to promote coding standard for {dest_org}")
+                print(f"Failed to promote coding standard for {dest_org}")
             
             results[dest_org] = validation_result
             
