@@ -30,6 +30,6 @@ svglib==1.1.0
 tabulate==0.8.9
 tinycss2==1.1.1
 toml==0.10.2
-urllib3==1.26.6
+urllib3==1.26.17
 webencodings==0.5.1
 xlsxwriter==3.0.3
