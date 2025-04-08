@@ -1,6 +1,6 @@
 autopep8==1.5.7
 beautifulsoup4>=4.9.3
-certifi==2021.5.30
+certifi==2022.12.07
 charset-normalizer==2.0.4
 colorama==0.4.4
 cssselect2==0.4.1
