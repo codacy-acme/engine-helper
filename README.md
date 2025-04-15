@@ -1,5 +1,7 @@
 # engine-helper
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/0b97a954c48740a38c37b729b80c7573)](https://app.codacy.com/gh/codacy-acme/engine-helper?utm_source=github.com&utm_medium=referral&utm_content=codacy-acme/engine-helper&utm_campaign=Badge_Grade)
+
 An helper to enable, disable or toggle configuration files for Codacy engines.
 
 ## Usage
