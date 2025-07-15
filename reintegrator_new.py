@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
 Codacy Integration Helper - API-based version
-A rewrite of the original reintegrator.py to work with Codacy's SPA architecture
-using the official REST API instead of web scraping.
+A rewrite of the original reintegrator.py to work with Codacy's SPA architecture.
+
+This script reintegrates repositories with a different user account by using their API token.
+For example, if a repository was integrated by John but should be owned by codacy_bot,
+run this script with codacy_bot's token to change the integration ownership.
 """
 
 import argparse
@@ -67,45 +70,23 @@ class CodacyAPIClient:
 
         return repositories
 
-    def get_organization_integration_settings(
-            self, provider: str, organization: str) -> Dict[str, Any]:
-        """Get organization-level integration settings"""
-        endpoint = f"/organizations/{provider}/{organization}/integrations/providerSettings"
-        response = self._make_request('GET', endpoint)
-        return response.json()
-
-    def get_repository_integration_settings(
-            self, provider: str, organization: str, repository: str) -> Dict[str, Any]:
-        """Get repository-level integration settings"""
-        endpoint = f"/organizations/{provider}/{organization}/repositories/{repository}/integrations/providerSettings"
-        response = self._make_request('GET', endpoint)
-        return response.json()
-
-    def update_organization_integration_settings(
-            self, provider: str, organization: str, settings: Dict[str, Any]) -> Dict[str, Any]:
-        """Update organization-level integration settings"""
-        endpoint = f"/organizations/{provider}/{organization}/integrations/providerSettings"
-        response = self._make_request('PATCH', endpoint, json=settings)
-        return response.json()
-
-    def update_repository_integration_settings(self,
-                                               provider: str,
-                                               organization: str,
-                                               repository: str,
-                                               settings: Dict[str,
-                                                              Any]) -> Optional[Dict[str,
-                                                                            Any]]:
-        """Update repository-level integration settings"""
-        endpoint = f"/organizations/{provider}/{organization}/repositories/{repository}/integrations/providerSettings"
-        response = self._make_request('PATCH', endpoint, json=settings)
-        # PATCH requests return 204 No Content with empty body
-        if response.status_code == 204:
-            return None
-        return response.json()
-
-    def refresh_provider_integration(
+    def get_repository_integration_info(
             self, provider: str, organization: str, repository: str) -> Optional[Dict[str, Any]]:
-        """Refresh provider integration for a repository"""
+        """Get repository integration information for logging purposes"""
+        try:
+            endpoint = f"/organizations/{provider}/{organization}/repositories/{repository}/integrations/providerSettings"
+            response = self._make_request('GET', endpoint)
+            return response.json()
+        except requests.exceptions.RequestException:
+            # Integration might not exist yet, which is fine
+            return None
+
+    def refresh_provider_integration(self,
+                                     provider: str,
+                                     organization: str,
+                                     repository: str) -> Optional[Dict[str,
+                                                                       Any]]:
+        """Refresh provider integration for a repository - this changes the integration owner"""
         endpoint = f"/organizations/{provider}/{organization}/repositories/{repository}/integrations/refreshProvider"
         response = self._make_request('POST', endpoint, json={})
         # POST requests may return 204 No Content with empty body
@@ -115,162 +96,70 @@ class CodacyAPIClient:
 
 
 class IntegrationManager:
-    """Manages integration settings for repositories"""
-
-    # Provider-specific default settings
-    PROVIDER_SETTINGS = {
-        'gh': {  # GitHub
-            'commitStatus': True,
-            'pullRequestComment': True,
-            'pullRequestSummary': True,
-            'suggestions': True,
-            'aiEnhancedComments': False
-        },
-        'gl': {  # GitLab
-            'commitStatus': True,
-            'pullRequestComment': True,
-            'pullRequestSummary': False,  # GitHub only
-            'suggestions': False,  # GitHub only
-            'aiEnhancedComments': True
-        },
-        'bb': {  # Bitbucket
-            'commitStatus': True,
-            'pullRequestComment': True,
-            'pullRequestSummary': False,  # GitHub only
-            'suggestions': False,  # GitHub only
-            'aiEnhancedComments': True
-        },
-        'ghe': {  # GitHub Enterprise
-            'commitStatus': True,
-            'pullRequestComment': True,
-            'pullRequestSummary': True,
-            'suggestions': True,
-            'aiEnhancedComments': False
-        },
-        'gle': {  # GitLab Enterprise
-            'commitStatus': True,
-            'pullRequestComment': True,
-            'pullRequestSummary': False,  # GitHub only
-            'suggestions': False,  # GitHub only
-            'aiEnhancedComments': True
-        },
-        'bbe': {  # Bitbucket Enterprise (Stash)
-            'commitStatus': True,
-            'pullRequestComment': True,
-            'pullRequestSummary': False,  # GitHub only
-            'suggestions': False,  # GitHub only
-            'aiEnhancedComments': True
-        }
-    }
+    """Manages repository integration ownership"""
 
     def __init__(self, client: CodacyAPIClient):
         self.client = client
 
-    def get_current_settings(self,
-                             provider: str,
-                             organization: str,
-                             repository: str) -> Optional[Dict[str,
-                                                               Any]]:
-        """Get current integration settings for a repository"""
+    def get_integration_owner(
+            self,
+            provider: str,
+            organization: str,
+            repository: str) -> Optional[str]:
+        """Get the current integration owner for logging purposes"""
         try:
-            return self.client.get_repository_integration_settings(
+            integration_info = self.client.get_repository_integration_info(
                 provider, organization, repository)
-        except requests.exceptions.RequestException as e:
-            print(f"Failed to get settings for {repository}: {e}")
+            if integration_info:
+                return integration_info.get('integratedBy', 'Unknown')
+            return None
+        except Exception as e:
+            print(f"Could not get integration info for {repository}: {e}")
             return None
 
-    def update_integration_settings(self,
-                                    provider: str,
-                                    organization: str,
-                                    repository: str,
-                                    custom_settings: Optional[Dict[str,
-                                                                   Any]] = None) -> bool:
-        """Update integration settings for a repository"""
-        try:
-            # Get default settings for the provider
-            default_settings = self.PROVIDER_SETTINGS.get(
-                provider, self.PROVIDER_SETTINGS['gh'])
-
-            # Use custom settings if provided, otherwise use defaults
-            settings_to_apply = custom_settings if custom_settings else default_settings
-
-            # Prepare the request body
-            request_body = {
-                'settings': settings_to_apply
-            }
-
-            print(f"Updating integration settings for {repository}...")
-            print(f"Settings: {settings_to_apply}")
-
-            # Update the settings
-            self.client.update_repository_integration_settings(
-                provider, organization, repository, request_body
-            )
-
-            print(f"✓ Successfully updated settings for {repository}")
-            return True
-
-        except requests.exceptions.RequestException as e:
-            print(f"✗ Failed to update settings for {repository}: {e}")
-            return False
-
-    def refresh_integration(
+    def reintegrate_repository(
             self,
             provider: str,
             organization: str,
             repository: str) -> bool:
-        """Refresh provider integration for a repository"""
-        try:
-            print(f"Refreshing integration for {repository}...")
-            self.client.refresh_provider_integration(
-                provider, organization, repository)
-            print(f"✓ Successfully refreshed integration for {repository}")
-            return True
-        except requests.exceptions.RequestException as e:
-            print(f"✗ Failed to refresh integration for {repository}: {e}")
-            return False
-
-    def reintegrate_repository(self,
-                               provider: str,
-                               organization: str,
-                               repository: str,
-                               custom_settings: Optional[Dict[str,
-                                                              Any]] = None) -> bool:
-        """Reintegrate a single repository with new settings"""
+        """Reintegrate a single repository to change ownership"""
         print(f"\n--- Processing repository: {repository} ---")
 
-        # Get current settings (for informational purposes)
-        current_settings = self.get_current_settings(
+        # Get current integration owner for logging
+        current_owner = self.get_integration_owner(
             provider, organization, repository)
-        if current_settings:
-            print(f"Current settings: {current_settings.get('settings', {})}")
-
-        # Update integration settings
-        settings_updated = self.update_integration_settings(
-            provider, organization, repository, custom_settings)
-
-        # Refresh the integration
-        integration_refreshed = self.refresh_integration(
-            provider, organization, repository)
-
-        success = settings_updated and integration_refreshed
-        if success:
-            print(f"✓ Successfully reintegrated {repository}")
+        if current_owner:
+            print(f"Current integration owner: {current_owner}")
         else:
-            print(f"✗ Failed to reintegrate {repository}")
+            print("No existing integration found or could not determine owner")
 
-        return success
+        # Refresh the integration (this changes ownership to the token owner)
+        try:
+            print(f"Reintegrating {repository} with new token owner...")
+            self.client.refresh_provider_integration(
+                provider, organization, repository)
+            print(f"✓ Successfully reintegrated {repository}")
+
+            # Optionally show new owner for confirmation
+            new_owner = self.get_integration_owner(
+                provider, organization, repository)
+            if new_owner and new_owner != current_owner:
+                print(f"New integration owner: {new_owner}")
+
+            return True
+        except requests.exceptions.RequestException as e:
+            print(f"✗ Failed to reintegrate {repository}: {e}")
+            return False
 
     def reintegrate_all(self,
                         provider: str,
                         organization: str,
-                        target_repositories: Optional[List[str]] = None,
-                        custom_settings: Optional[Dict[str,
-                                                       Any]] = None) -> Dict[str,
-                                                                             bool]:
+                        target_repositories: Optional[List[str]] = None) -> Dict[str,
+                                                                                 bool]:
         """Reintegrate all or specified repositories in an organization"""
         print(f"Starting reintegration for organization: {organization}")
         print(f"Provider: {provider}")
+        print("This will change integration ownership to the account associated with the provided token")
 
         # Get list of repositories
         try:
@@ -292,14 +181,14 @@ class IntegrationManager:
         for repo in repositories:
             repo_name = repo['name']
             success = self.reintegrate_repository(
-                provider, organization, repo_name, custom_settings)
+                provider, organization, repo_name)
             results[repo_name] = success
 
         # Summary
         successful = sum(1 for success in results.values() if success)
         total = len(results)
         print(f"\n=== Summary ===")
-        print(f"Successfully processed: {successful}/{total} repositories")
+        print(f"Successfully reintegrated: {successful}/{total} repositories")
 
         if successful < total:
             failed_repos = [repo for repo,
@@ -311,12 +200,15 @@ class IntegrationManager:
 
 def main():
     print('Codacy Integration Helper - API-based version')
-    print('A modern replacement for the web-scraping based reintegrator')
+    print('Changes repository integration ownership to the account associated with the provided token')
 
     parser = argparse.ArgumentParser(
-        description='Codacy Integration Helper - API Version')
-    parser.add_argument('--token', dest='token', required=True,
-                        help='Codacy API token for authentication')
+        description='Codacy Integration Helper - Changes integration ownership')
+    parser.add_argument(
+        '--token',
+        dest='token',
+        required=True,
+        help='Codacy API token for the account that should own the integrations')
     parser.add_argument('--provider', dest='provider', required=True,
                         help='Git provider (gh|gl|bb|ghe|gle|bbe)')
     parser.add_argument('--organization', dest='organization', required=True,
@@ -330,50 +222,7 @@ def main():
         '--which',
         dest='which',
         default=None,
-        help='Comma-separated list of repositories to update (default: all)')
-    parser.add_argument(
-        '--commit-status',
-        dest='commit_status',
-        action='store_true',
-        help='Enable commit status checks')
-    parser.add_argument(
-        '--no-commit-status',
-        dest='commit_status',
-        action='store_false',
-        help='Disable commit status checks')
-    parser.add_argument(
-        '--pr-comments',
-        dest='pr_comments',
-        action='store_true',
-        help='Enable pull request comments')
-    parser.add_argument(
-        '--no-pr-comments',
-        dest='pr_comments',
-        action='store_false',
-        help='Disable pull request comments')
-    parser.add_argument('--pr-summary', dest='pr_summary', action='store_true',
-                        help='Enable pull request summary (GitHub only)')
-    parser.add_argument(
-        '--no-pr-summary',
-        dest='pr_summary',
-        action='store_false',
-        help='Disable pull request summary')
-    parser.add_argument(
-        '--suggestions',
-        dest='suggestions',
-        action='store_true',
-        help='Enable suggestions (GitHub only)')
-    parser.add_argument(
-        '--no-suggestions',
-        dest='suggestions',
-        action='store_false',
-        help='Disable suggestions')
-
-    parser.set_defaults(
-        commit_status=None,
-        pr_comments=None,
-        pr_summary=None,
-        suggestions=None)
+        help='Comma-separated list of repositories to reintegrate (default: all)')
 
     args = parser.parse_args()
 
@@ -389,20 +238,6 @@ def main():
     if args.which:
         target_repositories = [repo.strip() for repo in args.which.split(',')]
 
-    # Build custom settings if any flags were provided
-    custom_settings = {}
-    if args.commit_status is not None:
-        custom_settings['commitStatus'] = args.commit_status
-    if args.pr_comments is not None:
-        custom_settings['pullRequestComment'] = args.pr_comments
-    if args.pr_summary is not None:
-        custom_settings['pullRequestSummary'] = args.pr_summary
-    if args.suggestions is not None:
-        custom_settings['suggestions'] = args.suggestions
-
-    # Use custom settings only if any were provided
-    settings_to_use = custom_settings if custom_settings else None
-
     # Initialize API client and integration manager
     try:
         client = CodacyAPIClient(args.baseurl, args.token)
@@ -410,18 +245,14 @@ def main():
 
         # Run the reintegration
         results = manager.reintegrate_all(
-            args.provider,
-            args.organization,
-            target_repositories,
-            settings_to_use
-        )
+            args.provider, args.organization, target_repositories)
 
         # Exit with appropriate code
         if all(results.values()):
-            print("\n✓ All repositories processed successfully!")
+            print("\n✓ All repositories reintegrated successfully!")
             sys.exit(0)
         else:
-            print("\n✗ Some repositories failed to process")
+            print("\n✗ Some repositories failed to reintegrate")
             sys.exit(1)
 
     except Exception as e:
