@@ -93,18 +93,24 @@ class CodacyAPIClient:
                                                organization: str,
                                                repository: str,
                                                settings: Dict[str,
-                                                              Any]) -> Dict[str,
-                                                                            Any]:
+                                                              Any]) -> Optional[Dict[str,
+                                                                            Any]]:
         """Update repository-level integration settings"""
         endpoint = f"/organizations/{provider}/{organization}/repositories/{repository}/integrations/providerSettings"
         response = self._make_request('PATCH', endpoint, json=settings)
+        # PATCH requests return 204 No Content with empty body
+        if response.status_code == 204:
+            return None
         return response.json()
 
     def refresh_provider_integration(
-            self, provider: str, organization: str, repository: str) -> Dict[str, Any]:
+            self, provider: str, organization: str, repository: str) -> Optional[Dict[str, Any]]:
         """Refresh provider integration for a repository"""
         endpoint = f"/organizations/{provider}/{organization}/repositories/{repository}/integrations/refreshProvider"
         response = self._make_request('POST', endpoint, json={})
+        # POST requests may return 204 No Content with empty body
+        if response.status_code == 204:
+            return None
         return response.json()
 
 
