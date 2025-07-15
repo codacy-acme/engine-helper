@@ -1,209 +1,163 @@
-# Codacy Integration Helper - API-based Version
+# Codacy Integration Helper - API Version
 
-This is a modern rewrite of the original `reintegrator.py` script to work with Codacy's new SPA (Single Page Application) architecture. The original script used web scraping and is no longer functional due to Codacy's migration to a React-based frontend.
+A modern replacement for the original `reintegrator.py` script that works with Codacy's SPA architecture.
 
-## What Changed
+## Purpose
 
-### Original Script Issues
-- **Web Scraping**: Used BeautifulSoup to parse HTML pages that no longer exist
-- **Cookie Authentication**: Relied on browser cookies which are unreliable for automation
-- **Internal Endpoints**: Made requests to internal web URLs that have been deprecated
-- **Browser Automation**: Required opening browser windows for OAuth flows
+This script changes repository integration ownership from one user account to another using API tokens. 
 
-### New API-based Approach
-- **REST API**: Uses Codacy's official REST API v3 endpoints
-- **Token Authentication**: Secure API token-based authentication
-- **Documented Endpoints**: Uses officially supported and documented API endpoints
-- **No Browser Required**: Pure API-based solution with no browser dependencies
+**Use Case Example**: If a repository was integrated by John but should be owned by `codacy_bot`, run this script with `codacy_bot`'s API token to transfer the integration ownership.
 
-## Features
+## Key Features
 
-### Core Functionality
-- List repositories in an organization
-- Get current integration settings for repositories
-- Update integration settings (commit status, PR comments, PR summary, suggestions)
-- Refresh provider integrations
-- Batch process multiple repositories
-
-### Supported Providers
-- `gh` - GitHub
-- `gl` - GitLab  
-- `bb` - Bitbucket
-- `ghe` - GitHub Enterprise
-- `gle` - GitLab Enterprise
-- `bbe` - Bitbucket Enterprise (Stash)
-
-### Integration Settings
-- **Commit Status**: Enable/disable status checks on commits
-- **Pull Request Comments**: Enable/disable issue annotations on PRs
-- **Pull Request Summary**: Enable/disable coverage summary (GitHub only)
-- **Suggestions**: Enable/disable suggested fixes (GitHub only)
-- **AI Enhanced Comments**: Enable/disable AI-enhanced comments
+- **API-based**: Uses Codacy's official REST API v3 instead of web scraping
+- **Token authentication**: Secure API token-based authentication
+- **Integration ownership transfer**: Changes who owns the repository integration
+- **Comprehensive logging**: Shows current and new integration owners
+- **Batch processing**: Can process multiple repositories at once
+- **Error handling**: Proper error reporting and recovery
 
 ## Installation
 
-The script uses the same dependencies as the original, but no longer requires BeautifulSoup or browser automation:
-
-```bash
-pip install requests
-```
+1. Ensure you have Python 3.6+ installed
+2. Install required dependencies:
+   ```bash
+   pip install requests
+   ```
 
 ## Usage
 
 ### Basic Usage
+
 ```bash
-python reintegrator_new.py --token YOUR_API_TOKEN --provider gh --organization your-org
+# Transfer integration ownership to the account associated with the token
+python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_TOKEN
 ```
 
-### Process Specific Repositories
+### Single Repository
+
 ```bash
-python reintegrator_new.py --token YOUR_API_TOKEN --provider gh --organization your-org --which "repo1,repo2,repo3"
+# Transfer ownership for a specific repository
+python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_TOKEN --which "my-repo"
 ```
 
-### Custom Settings
-```bash
-# Enable all features for GitHub
-python reintegrator_new.py --token YOUR_API_TOKEN --provider gh --organization your-org \
-  --commit-status --pr-comments --pr-summary --suggestions
+### Multiple Repositories
 
-# Disable specific features
-python reintegrator_new.py --token YOUR_API_TOKEN --provider gh --organization your-org \
-  --no-pr-summary --no-suggestions
+```bash
+# Transfer ownership for specific repositories
+python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_TOKEN --which "repo1,repo2,repo3"
 ```
 
-### Enterprise/Self-hosted Codacy
+### Different Codacy Instance
+
 ```bash
-python reintegrator_new.py --token YOUR_API_TOKEN --provider ghe --organization your-org \
-  --baseurl https://your-codacy-instance.com
+# For self-hosted Codacy instances
+python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_TOKEN --baseurl https://codacy.mycompany.com
 ```
 
-## Command Line Options
+## Command Line Arguments
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--token` | Codacy API token (required) | - |
-| `--provider` | Git provider (gh\|gl\|bb\|ghe\|gle\|bbe) | - |
-| `--organization` | Organization name (required) | - |
-| `--baseurl` | Codacy server URL | https://app.codacy.com |
-| `--which` | Comma-separated list of repositories | All repositories |
-| `--commit-status` / `--no-commit-status` | Enable/disable commit status checks | Provider default |
-| `--pr-comments` / `--no-pr-comments` | Enable/disable PR comments | Provider default |
-| `--pr-summary` / `--no-pr-summary` | Enable/disable PR summary (GitHub only) | Provider default |
-| `--suggestions` / `--no-suggestions` | Enable/disable suggestions (GitHub only) | Provider default |
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `--token` | Yes | Codacy API token for the account that should own the integrations |
+| `--provider` | Yes | Git provider: `gh` (GitHub), `gl` (GitLab), `bb` (Bitbucket), `ghe` (GitHub Enterprise), `gle` (GitLab Enterprise), `bbe` (Bitbucket Enterprise) |
+| `--organization` | Yes | Organization name (case-sensitive) |
+| `--baseurl` | No | Codacy server address (default: `https://app.codacy.com`) |
+| `--which` | No | Comma-separated list of repositories to process (default: all repositories) |
 
-## API Token
+## How It Works
 
-You need a Codacy API token with appropriate permissions:
+1. **Lists repositories** in the specified organization
+2. **Filters repositories** if `--which` is specified
+3. **For each repository**:
+   - Shows current integration owner (for logging)
+   - Calls the refresh provider integration API endpoint
+   - This automatically changes the integration owner to the account associated with the token
+   - Shows new integration owner (for confirmation)
 
-1. Go to your Codacy account settings
-2. Navigate to "API Tokens" 
-3. Create a new token with organization and repository permissions
-4. Use this token with the `--token` parameter
+## API Token Setup
 
-## Provider-Specific Defaults
-
-The script applies sensible defaults based on the provider:
-
-### GitHub (`gh`, `ghe`)
-- Commit Status: ✓ Enabled
-- PR Comments: ✓ Enabled  
-- PR Summary: ✓ Enabled
-- Suggestions: ✓ Enabled
-- AI Enhanced Comments: ✗ Disabled
-
-### GitLab (`gl`, `gle`)
-- Commit Status: ✓ Enabled
-- PR Comments: ✓ Enabled
-- PR Summary: ✗ Disabled (GitHub only)
-- Suggestions: ✗ Disabled (GitHub only)
-- AI Enhanced Comments: ✓ Enabled
-
-### Bitbucket (`bb`, `bbe`)
-- Commit Status: ✓ Enabled
-- PR Comments: ✓ Enabled
-- PR Summary: ✗ Disabled (GitHub only)
-- Suggestions: ✗ Disabled (GitHub only)
-- AI Enhanced Comments: ✓ Enabled
-
-## Error Handling
-
-The script includes comprehensive error handling:
-- API authentication errors
-- Network connectivity issues
-- Invalid repository names
-- Permission errors
-- Rate limiting
-
-Failed repositories are reported in the summary, and the script exits with appropriate status codes.
+1. Log in to Codacy with the account that should own the integrations
+2. Go to Account Settings → API Tokens
+3. Generate a new API token with appropriate permissions
+4. Use this token with the `--token` argument
 
 ## Migration from Original Script
 
-### Command Line Compatibility
-The new script maintains backward compatibility with the original command line interface:
+The original `reintegrator.py` used web scraping and is no longer compatible with Codacy's SPA architecture. This new script:
+
+- ✅ **Works with current Codacy**: Compatible with SPA architecture
+- ✅ **More reliable**: Uses stable API endpoints instead of HTML parsing
+- ✅ **Better security**: API tokens instead of cookie manipulation
+- ✅ **Simpler**: Focused on core functionality (ownership transfer)
+- ✅ **Faster**: No browser automation or complex HTML parsing
+
+### Command Comparison
 
 ```bash
-# Original command
+# Old script (broken)
 python reintegrator.py --provider gh --organization MyOrg --token TOKEN
 
-# New command (same syntax)
-python reintegrator_new.py --provider gh --organization MyOrg --token TOKEN
+# New script (working)
+python3 reintegrator_new.py --provider gh --organization MyOrg --token TOKEN
 ```
 
-### Key Differences
-1. **No cookie file required**: The new script uses API tokens instead of cookies
-2. **No browser automation**: Everything is done via API calls
-3. **Better error handling**: More detailed error messages and recovery
-4. **Additional options**: More granular control over integration settings
+## Example Output
+
+```
+Codacy Integration Helper - API-based version
+Changes repository integration ownership to the account associated with the provided token
+Starting reintegration for organization: MyOrg
+Provider: gh
+This will change integration ownership to the account associated with the provided token
+Found 5 repositories
+Filtering to 2 specified repositories
+
+--- Processing repository: my-app ---
+Current integration owner: john@company.com
+Reintegrating my-app with new token owner...
+✓ Successfully reintegrated my-app
+New integration owner: codacy_bot@company.com
+
+--- Processing repository: my-api ---
+Current integration owner: john@company.com
+Reintegrating my-api with new token owner...
+✓ Successfully reintegrated my-api
+New integration owner: codacy_bot@company.com
+
+=== Summary ===
+Successfully reintegrated: 2/2 repositories
+
+✓ All repositories reintegrated successfully!
+```
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Authentication Error (401)**
-- Verify your API token is correct and has not expired
-- Ensure the token has the required permissions for the organization
+1. **404 Not Found**: Check organization name case sensitivity (e.g., `MyOrg` vs `myorg`)
+2. **401 Unauthorized**: Verify API token is valid and has necessary permissions
+3. **Repository not found**: Ensure repository exists and is accessible with the provided token
 
-**Repository Not Found (404)**
-- Check that the repository name is correct
-- Verify you have access to the repository
-- Ensure the organization name is correct
+### Error Messages
 
-**Permission Denied (403)**
-- Your API token may not have sufficient permissions
-- You may not be a member of the organization
-- The repository may be private and you don't have access
-
-**Rate Limiting (429)**
-- The script will automatically retry with backoff
-- Consider processing fewer repositories at once
-
-### Debug Mode
-For debugging, you can modify the script to enable verbose logging by adding:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
+- `Could not find repository`: Repository doesn't exist or token lacks access
+- `API request failed`: Network issues or API endpoint problems
+- `Failed to list repositories`: Organization doesn't exist or token lacks permissions
 
 ## API Endpoints Used
 
-The script uses these Codacy API v3 endpoints:
+- `GET /api/v3/organizations/{provider}/{org}/repositories` - List repositories
+- `GET /api/v3/organizations/{provider}/{org}/repositories/{repo}/integrations/providerSettings` - Get integration info
+- `POST /api/v3/organizations/{provider}/{org}/repositories/{repo}/integrations/refreshProvider` - Refresh integration (changes owner)
 
-- `GET /organizations/{provider}/{org}/repositories` - List repositories
-- `GET /organizations/{provider}/{org}/integrations/providerSettings` - Get org settings
-- `GET /organizations/{provider}/{org}/repositories/{repo}/integrations/providerSettings` - Get repo settings
-- `PATCH /organizations/{provider}/{org}/repositories/{repo}/integrations/providerSettings` - Update repo settings
-- `POST /organizations/{provider}/{org}/repositories/{repo}/integrations/refreshProvider` - Refresh integration
+## Requirements
 
-## Contributing
-
-When making changes to this script:
-
-1. Test with different providers (GitHub, GitLab, Bitbucket)
-2. Verify error handling for various failure scenarios
-3. Ensure backward compatibility with the original command line interface
-4. Update this README with any new features or changes
+- Python 3.6+
+- `requests` library
+- Valid Codacy API token
+- Network access to Codacy instance
 
 ## License
 
-This script is part of the Codacy engine-helper toolkit and follows the same license as the parent project.
+This script is part of the Codacy engine-helper toolkit.
