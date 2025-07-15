@@ -131,6 +131,12 @@ dmypy.json
 
 # App related
 auth.cookie
+cookie.txt
+*.cookie
+swagger.yaml
 patterns.json
 data/
 .DS_Store
+
+#Ignore vscode AI rules
+.github/copilot-instructions.md
