@@ -6,6 +6,10 @@ A rewrite of the original reintegrator.py to work with Codacy's SPA architecture
 This script reintegrates repositories with a different user account by using their API token.
 For example, if a repository was integrated by John but should be owned by codacy_bot,
 run this script with codacy_bot's token to change the integration ownership.
+
+Supports GitLab (gl) and BitBucket (bb) providers only.
+GitHub integration is handled through GitHub Apps.
+Self-hosted providers are not supported in this cloud-specific version.
 """
 
 import argparse
@@ -210,14 +214,9 @@ def main():
         required=True,
         help='Codacy API token for the account that should own the integrations')
     parser.add_argument('--provider', dest='provider', required=True,
-                        help='Git provider (gh|gl|bb|ghe|gle|bbe)')
+                        help='Git provider (gl|bb)')
     parser.add_argument('--organization', dest='organization', required=True,
                         help='Organization name')
-    parser.add_argument(
-        '--baseurl',
-        dest='baseurl',
-        default='https://app.codacy.com',
-        help='Codacy server address (default: https://app.codacy.com)')
     parser.add_argument(
         '--which',
         dest='which',
@@ -227,7 +226,7 @@ def main():
     args = parser.parse_args()
 
     # Validate provider
-    valid_providers = ['gh', 'gl', 'bb', 'ghe', 'gle', 'bbe']
+    valid_providers = ['gl', 'bb']
     if args.provider not in valid_providers:
         print(
             f"Error: Invalid provider '{args.provider}'. Must be one of: {', '.join(valid_providers)}")
@@ -240,7 +239,7 @@ def main():
 
     # Initialize API client and integration manager
     try:
-        client = CodacyAPIClient(args.baseurl, args.token)
+        client = CodacyAPIClient('https://app.codacy.com', args.token)
         manager = IntegrationManager(client)
 
         # Run the reintegration
