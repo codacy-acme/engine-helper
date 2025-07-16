@@ -48,13 +48,6 @@ python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_
 python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_TOKEN --which "repo1,repo2,repo3"
 ```
 
-### Different Codacy Instance
-
-```bash
-# For self-hosted Codacy instances
-python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_TOKEN --baseurl https://codacy.mycompany.com
-```
-
 ## Command Line Arguments
 
 | Argument | Required | Description |
@@ -62,7 +55,6 @@ python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_
 | `--token` | Yes | Codacy API token for the account that should own the integrations |
 | `--provider` | Yes | Git provider: `gl` (GitLab), `bb` (Bitbucket) |
 | `--organization` | Yes | Organization name (case-sensitive) |
-| `--baseurl` | No | Codacy server address (default: `https://app.codacy.com`) |
 | `--which` | No | Comma-separated list of repositories to process (default: all repositories) |
 
 ## How It Works
