@@ -60,7 +60,7 @@ python3 reintegrator_new.py --provider gh --organization MyOrg --token YOUR_API_
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `--token` | Yes | Codacy API token for the account that should own the integrations |
-| `--provider` | Yes | Git provider: `gh` (GitHub), `gl` (GitLab), `bb` (Bitbucket), `ghe` (GitHub Enterprise), `gle` (GitLab Enterprise), `bbe` (Bitbucket Enterprise) |
+| `--provider` | Yes | Git provider: `gl` (GitLab), `bb` (Bitbucket) |
 | `--organization` | Yes | Organization name (case-sensitive) |
 | `--baseurl` | No | Codacy server address (default: `https://app.codacy.com`) |
 | `--which` | No | Comma-separated list of repositories to process (default: all repositories) |
