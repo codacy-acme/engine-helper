@@ -192,13 +192,12 @@ python3 generateIssuesReport.py --baseurl {ignore it, if cloud} --provider {git-
 This utility automates the maintenance of your Bitbucket repository by removing stale branches. It ensures that active development branches and the main codebase remain untouched while clearing out old, merged, or abandoned branches.
 
 
-
 ### 🚀 How It Works
 
 The script applies the following decision logic to every branch in your repository:
 
-1. **Whitelist Check:** Is the branch the `main/master/default` branch or in the `WHITELIST` (e.g., `develop`, `release`)? -> **KEEP**
-2. **PR Check:** Does the branch have an **OPEN** Pull Request associated with it? -> **KEEP**
+1. **PR Check:** Does the branch have an **OPEN** Pull Request associated with it? -> **KEEP**
+2. **Whitelist Check:** Is the branch the `main/master/default` branch or in the `WHITELIST` (e.g., `develop`, `release`)? -> **KEEP**
 3. **Age Check:** Was the last commit made more than **X days** ago (Default: 180)?
     * **No:** -> **KEEP**
     * **Yes:** -> **DELETE** 
@@ -238,9 +237,9 @@ Click Create Repository Access Token.
 
 Select the following Scopes:
 
-* Repositories: Read & Write (To read/delete branches)
-
 * Pull requests: Read (To check for open PRs)
+
+* Repositories: Read & Write (To read/delete branches)
 
 Copy the token immediately.
 

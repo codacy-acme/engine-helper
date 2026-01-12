@@ -82,7 +82,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
     logger.info(f"Total branches found: {len(all_branches)}")
 
     deleted_count = 0
-    
+
     print("-" * 60)
     for branch in all_branches:
         name = branch['name']
@@ -130,6 +130,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
     logger.info(f"Cleanup Complete. Total branches deleted: {deleted_count}")
 
 if __name__ == "__main__":
+
 
     parser = argparse.ArgumentParser(description="Bitbucket Branch Cleanup Utility")
     
