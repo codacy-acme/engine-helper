@@ -197,11 +197,11 @@ This utility automates the maintenance of your Bitbucket repository by removing 
 
 The script applies the following decision logic to every branch in your repository:
 
-1.  **Whitelist Check:** Is the branch the `main/master/default` branch or in the `WHITELIST` (e.g., `develop`, `release`)? -> **KEEP**
-2.  **PR Check:** Does the branch have an **OPEN** Pull Request associated with it? -> **KEEP**
-3.  **Age Check:** Was the last commit made more than **X days** ago (Default: 180)?
-    * **Yes:** -> **DELETE**
+1. **Whitelist Check:** Is the branch the `main/master/default` branch or in the `WHITELIST` (e.g., `develop`, `release`)? -> **KEEP**
+2. **PR Check:** Does the branch have an **OPEN** Pull Request associated with it? -> **KEEP**
+3. **Age Check:** Was the last commit made more than **X days** ago (Default: 180)?
     * **No:** -> **KEEP**
+    * **Yes:** -> **DELETE** 
 
 ### 🛠️ Prerequisites
 
@@ -211,6 +211,7 @@ The script applies the following decision logic to every branch in your reposito
 ### ⚙️ Setup
 
 #### 1. Create Environment & Install Dependencies
+
 To avoid system permission errors, run these commands in the script folder:
 
 ```bash
@@ -228,6 +229,7 @@ pip install requests python-dotenv
 ```
 
 #### 2. Create a Repository Access Token
+
 **Do not use your personal password. Create a token specifically for this script:**
 
 Go to Repository Settings > Security > Access Tokens.
@@ -236,13 +238,14 @@ Click Create Repository Access Token.
 
 Select the following Scopes:
 
--   Repositories: Read & Write (To read/delete branches)
+* Repositories: Read & Write (To read/delete branches)
 
--   Pull requests: Read (To check for open PRs)
+* Pull requests: Read (To check for open PRs)
 
 Copy the token immediately.
 
 #### 3. Configure Environment Variables
+
 Create a file named .env in the same folder as the script. Important: Ensure the variable names match exactly what is in the script.
 
 ```bash
@@ -255,6 +258,7 @@ BITBUCKET_ACCESS_TOKEN=your_access_token_here
 ### 🏃‍♂️ Usage
 
 #### Safety Mode (Dry Run)
+
 By default, the script runs in Dry Run mode. It lists what would be deleted without actually removing anything.
 
 ```bash
@@ -262,6 +266,7 @@ python delete_bb_branches.py
 ```
 
 #### Change Age Cutoff
+
 To check for branches older than 90 days (instead of the default 180):
 
 ```bash
@@ -269,6 +274,7 @@ python delete_bb_branches.py --days 90
 ```
 
 #### ⚠️ Live Deletion
+
 Once you have verified the Dry Run output, pass the --force flag to perform the actual deletion.
 
 ```bash
@@ -282,6 +288,7 @@ python delete_bb_branches.py --force --days 90
 ```
 
 #### 🛡️ Whitelist Configuration
+
 To prevent specific branch names from ever being deleted, edit the WHITELIST array inside delete_bb_branches.py:
 
 ```bash

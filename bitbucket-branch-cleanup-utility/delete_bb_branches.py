@@ -56,7 +56,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
 
     logger.info(f"Starting cleanup for {WORKSPACE}/{REPO_SLUG}")
     logger.info(f"Mode: {'DRY RUN (No changes)' if dry_run else 'DESTRUCTIVE (Will delete)'}")
-    
+
     # 0. Calculate Cutoff Date
     cut_off_date = datetime.now(timezone.utc) - timedelta(days=days)
     logger.info(f"Cutoff date: {cut_off_date.strftime('%Y-%m-%d')} ({days} days ago)")
@@ -122,7 +122,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
                 else:
                     logger.error(f"[ERROR] Failed to delete {name}: {resp.status_code}")
             except Exception as e:
-                 logger.error(f"[ERROR] Exception deleting {name}: {e}")
+                logger.error(f"[ERROR] Exception deleting {name}: {e}")
             
             time.sleep(0.2) # Rate limit protection
 
@@ -130,6 +130,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
     logger.info(f"Cleanup Complete. Total branches deleted: {deleted_count}")
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description="Bitbucket Branch Cleanup Utility")
     
     # Arguments
@@ -138,6 +139,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    # Logic inversion for clarity: The function expects `dry_run=True` by default. 
+    # Logic inversion for clarity: The function expects `dry_run=True` by default.
     # Passing --force makes dry_run=False.
     cleanup(dry_run=not args.force, days=args.days)
