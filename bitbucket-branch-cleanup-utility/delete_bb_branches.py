@@ -86,7 +86,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
     print("-" * 60)
     for branch in all_branches:
         name = branch['name']
-        
+
         # Rule 1: Default or Whitelisted
         if name == default_branch or name in WHITELIST:
             logger.info(f"[KEEP] {name:<30} | Whitelisted/Default")
@@ -129,9 +129,8 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
     print("-" * 60)
     logger.info(f"Cleanup Complete. Total branches deleted: {deleted_count}")
 
+
 if __name__ == "__main__":
-
-
     parser = argparse.ArgumentParser(description="Bitbucket Branch Cleanup Utility")
     
     # Arguments
@@ -143,3 +142,4 @@ if __name__ == "__main__":
     # Logic inversion for clarity: The function expects `dry_run=True` by default.
     # Passing --force makes dry_run=False.
     cleanup(dry_run=not args.force, days=args.days)
+
