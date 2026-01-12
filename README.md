@@ -186,3 +186,111 @@ With this script, you'll be able to generate a report with all issues per reposi
 ```bash
 python3 generateIssuesReport.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account}
 ```
+
+## Bitbucket Branch Cleanup Utility
+
+This utility automates the maintenance of your Bitbucket repository by removing stale branches. It ensures that active development branches and the main codebase remain untouched while clearing out old, merged, or abandoned branches.
+
+### 🚀 How It Works
+
+The script applies the following decision logic to every branch in your repository:
+
+1. **PR Check:** Does the branch have an **OPEN** Pull Request associated with it? -> **KEEP**
+2. **Whitelist Check:** Is the branch the `main/master/default` branch or in the `WHITELIST` (e.g., `develop`, `release`)? -> **KEEP**
+3. **Age Check:** Was the last commit made more than **X days** ago (Default: 180)?
+    * **No:** -> **KEEP**
+    * **Yes:** -> **DELETE** 
+
+### 🛠️ Prerequisites
+
+* Python 3.7+
+* A Bitbucket **Repository Access Token**
+
+### ⚙️ Setup
+
+#### 1. Create Environment & Install Dependencies
+
+To avoid system permission errors, run these commands in the script folder:
+
+```bash
+# Create a virtual environment
+python3 -m venv venv
+
+# Activate the environment
+# (On Mac/Linux):
+source venv/bin/activate
+# (On Windows):
+# venv\Scripts\activate
+
+# Install required libraries
+pip install requests python-dotenv
+```
+
+#### 2. Create a Repository Access Token
+
+**Do not use your personal password. Create a token specifically for this script:**
+
+Go to Repository Settings > Security > Access Tokens.
+
+Click Create Repository Access Token.
+
+Select the following Scopes:
+
+* Pull requests: Read (To check for open PRs)
+
+* Repositories: Read & Write (To read/delete branches)
+
+Copy the token immediately.
+
+#### 3. Configure Environment Variables
+
+Create a file named .env in the same folder as the script. Important: Ensure the variable names match exactly what is in the script.
+
+```bash
+BITBUCKET_WORKSPACE=your_workspace_id
+BITBUCKET_USERNAME=your_username
+BITBUCKET_REPO_SLUG=your_repo_slug
+BITBUCKET_ACCESS_TOKEN=your_access_token_here
+```
+
+### 🏃‍♂️ Usage
+
+#### Safety Mode (Dry Run)
+
+By default, the script runs in Dry Run mode. It lists what would be deleted without actually removing anything.
+
+```bash
+python delete_bb_branches.py
+```
+
+#### Change Age Cutoff
+
+To check for branches older than 90 days (instead of the default 180):
+
+```bash
+python delete_bb_branches.py --days 90
+```
+
+#### ⚠️ Live Deletion
+
+Once you have verified the Dry Run output, pass the --force flag to perform the actual deletion.
+
+```bash
+python delete_bb_branches.py --force
+```
+
+Or if you want to delete all branches older than 90 days:
+
+```bash
+python delete_bb_branches.py --force --days 90
+```
+
+#### 🛡️ Whitelist Configuration
+
+To prevent specific branch names from ever being deleted, edit the WHITELIST array inside delete_bb_branches.py:
+
+```bash
+WHITELIST = ['develop', 'release', 'master', 'main', 'production']
+```
+
+Note: the default branch is whitelisted by default

@@ -140,3 +140,9 @@ data/
 
 #Ignore vscode AI rules
 .github/copilot-instructions.md
+
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
+
+.codacy/
