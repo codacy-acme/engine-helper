@@ -186,3 +186,84 @@ With this script, you'll be able to generate a report with all issues per reposi
 ```bash
 python3 generateIssuesReport.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account}
 ```
+
+## Bitbucket Branch Cleanup Utility
+
+This utility automates the maintenance of your Bitbucket repository by removing stale branches. It identifies branches that are inactive and safe to delete based on specific criteria, helping keep your repository clean and manageable.
+
+### 🚀 How It Works
+
+The script iterates through all branches in the repository and applies the following logic to decide whether to Keep or Delete a branch:
+
+Default Branch: The main branch (e.g., main or master) is never deleted.
+
+Open Pull Requests: Any branch currently associated with an OPEN Pull Request is kept, regardless of age.
+
+Activity Age:
+
+-   less then 6 Months: Branches with a commit in the last 180 days are kept.
+
+-   more than 6 Months: Branches with no activity for over 180 days are deleted.
+
+### 🛠️ Prerequisites
+
+-   Python 3.7+
+
+-   requests library
+
+### ⚙️ Setup
+
+1. Install Dependencies
+
+```bash
+pip install requests
+```
+
+2. Generate Repository Access Token
+You need to create a Repository Access Token specifically for this script.
+
+Navigate to your repository's Access Tokens settings: https://bitbucket.org/<workspaceName>/<repositoryName>/admin/access-tokens
+
+Click Create Repository Access Token.
+
+Select the following Scopes:
+
+-   Read:repository:bitbucket (To read branch information)
+
+-   Write:repository:bitbucket (To delete branches)
+
+-   Read:pullrequest:bitbucket (To check for open pull requests)
+
+Copy the generated token immediately.
+
+3. Configure the Script
+Open cleanup_branches.py (or whatever you named the file) and edit the Configuration section at the top:
+
+```python
+WORKSPACE = "your_workspace_id"
+REPO_SLUG = "your_repo_name"
+USERNAME  = "your_bitbucket_username"
+API_TOKEN = "your_app_password" 
+```
+
+#### 🏃‍♂️ Usage
+
+⚠️ Safety Mode (Dry Run)
+By default, the script runs in Dry Run mode. It will print exactly what it would do, but will not delete anything.
+
+Ensure DRY_RUN = True inside the script.
+
+Run the script:
+
+```bash
+python cleanup_branches.py
+Review the output marked [Dry Run].
+```
+
+### 🗑️ Live Deletion
+Once you have verified the Dry Run output:
+Edit the script and set DRY_RUN = False.
+Run the script again to permanently delete the stale branches.
+
+### Disclaimer
+This script performs destructive actions (deletion). While it includes safety checks (Dry Run, PR protection), please ensure you have verified the Dry Run output before executing with DRY_RUN = False.
