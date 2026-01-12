@@ -91,7 +91,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
         if name == default_branch or name in WHITELIST:
             logger.info(f"[KEEP] {name:<30} | Whitelisted/Default")
             continue
-            
+
         # Rule 2: Open PRs
         if name in protected_by_pr:
             logger.info(f"[KEEP] {name:<30} | Has Open PR")
