@@ -5,8 +5,11 @@ from datetime import datetime, timedelta, timezone
 # --- Configuration ---
 WORKSPACE = "xxxxxxxxxx"
 REPO_SLUG = "xxxxxxxxxx"
-USERNAME  = "xxxxxxxxxx"
-API_TOKEN = "xxxxxxxxxx"  # Needs 'Repo:Write' & 'PR:Read'
+USERNAME = "xxxxxxxxxx"
+API_TOKEN = "xxxxxxxxxx"  # Needs Read:repository:bitbucket & Write:repository:bitbucket & Read:pullrequest:bitbucket permissions
+CUT_OFF_DAYS = 365  # How old (in days) a branch must be to be considered for deletion
+WHITELIST = ['develop', 'release']  # Branch names to never delete, e.g., ['develop', 'release']
+
 DRY_RUN = True  # Set to False to actually delete branches
 
 # --- Constants ---
@@ -31,10 +34,10 @@ def get_all_paginated(url):
     return items
 
 def cleanup():
-    # 0. Calculate Cutoff Date (6 months ago)
+    # 0. Calculate Cutoff Date
     # Using UTC to ensure consistency with Bitbucket's timezone format
-    six_months_ago = datetime.now(timezone.utc) - timedelta(days=180)
-    print(f"Cutoff date set to: {six_months_ago.strftime('%Y-%m-%d')}")
+    cut_off_date = datetime.now(timezone.utc) - timedelta(days=CUT_OFF_DAYS)
+    print(f"Cutoff date set to: {cut_off_date.strftime('%Y-%m-%d')}")
     print("Branches older than this (without PRs) will be deleted.\n")
 
     # 1. Get the Default Branch
@@ -62,7 +65,8 @@ def cleanup():
         name = branch['name']
         
         # --- Rule 1: Keep Default Branch --- this one is not deletable
-        if name == default_branch:
+        if name == default_branch or name in WHITELIST:
+            print(f"[Keep] {name:<30} | Reason: Default or Whitelisted")
             continue
             
         # --- Rule 2: Keep Branches with Open PRs --- you're still working on them
@@ -77,9 +81,9 @@ def cleanup():
         if last_commit_date_str:
             # Parse the ISO 8601 date string provided by Bitbucket
             last_commit_date = datetime.fromisoformat(last_commit_date_str)
-            
-            # If the branch is NEWER than 6 months, keep it
-            if last_commit_date > six_months_ago:
+
+            # If the branch is NEWER than the cutoff date, keep it
+            if last_commit_date > cut_off_date:
                 print(f"[Keep] {name:<30} | Reason: Recent activity ({last_commit_date.strftime('%Y-%m-%d')})")
                 continue
         else:
