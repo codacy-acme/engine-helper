@@ -27,7 +27,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# --- Constants ---
+# --- BITBUCKET API BASE URL ---
 BASE_URL = f"https://api.bitbucket.org/2.0/repositories/{WORKSPACE}/{REPO_SLUG}"
 HEADERS = {
     "Accept": "application/json",
@@ -123,7 +123,7 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
                     logger.error(f"[ERROR] Failed to delete {name}: {resp.status_code}")
             except Exception as e:
                 logger.error(f"[ERROR] Exception deleting {name}: {e}")
-            
+
             time.sleep(0.2) # Rate limit protection
 
     print("-" * 60)
@@ -132,13 +132,13 @@ def cleanup(dry_run=True, days=DEFAULT_CUT_OFF_DAYS):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Bitbucket Branch Cleanup Utility")
-    
+
     # Arguments
     parser.add_argument('--force', action='store_true', help="Execute actual deletion (Disable Dry Run)")
     parser.add_argument('--days', type=int, default=DEFAULT_CUT_OFF_DAYS, help="Days of inactivity before deletion (default: 180)")
-    
+
     args = parser.parse_args()
-    
+
     # Logic inversion for clarity: The function expects `dry_run=True` by default.
     # Passing --force makes dry_run=False.
     cleanup(dry_run=not args.force, days=args.days)
