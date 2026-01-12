@@ -191,7 +191,6 @@ python3 generateIssuesReport.py --baseurl {ignore it, if cloud} --provider {git-
 
 This utility automates the maintenance of your Bitbucket repository by removing stale branches. It ensures that active development branches and the main codebase remain untouched while clearing out old, merged, or abandoned branches.
 
-
 ### 🚀 How It Works
 
 The script applies the following decision logic to every branch in your repository:
