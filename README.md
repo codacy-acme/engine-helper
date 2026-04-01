@@ -187,6 +187,22 @@ With this script, you'll be able to generate a report with all issues per reposi
 python3 generateIssuesReport.py --baseurl {ignore it, if cloud} --provider {git-provider} --organization {organization name} --apiToken {API token on user account}
 ```
 
+## Script to get the Organization Overview
+
+With this script, you'll be able to generate the Organization Overview and get the following fields:
+
+-  Repository Name
+-  Repository Last Update Date and Time
+-  Coverage Percentage Per Repository
+-  Repository Grade
+-  Repository Total Issues
+
+### Execution
+
+```bash
+python3 organizationOverview.py --provider {git-provider gh,bb or gl} --organization {organization name} --apiToken {API token on user account}
+```
+
 ## Bitbucket Branch Cleanup Utility
 
 This utility automates the maintenance of your Bitbucket repository by removing stale branches. It ensures that active development branches and the main codebase remain untouched while clearing out old, merged, or abandoned branches.
