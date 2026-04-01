@@ -191,11 +191,11 @@ python3 generateIssuesReport.py --baseurl {ignore it, if cloud} --provider {git-
 
 With this script, you'll be able to generate the Organization Overview and get the following fields:
 
--  Repository Name
--  Repository Last Update Date and Time
--  Coverage Percentage Per Repository
--  Repository Grade
--  Repository Total Issues
+- Repository Name
+- Repository Last Update Date and Time
+- Coverage Percentage Per Repository
+- Repository Grade
+- Repository Total Issues
 
 ### Execution
 
@@ -214,13 +214,13 @@ The script applies the following decision logic to every branch in your reposito
 1. **PR Check:** Does the branch have an **OPEN** Pull Request associated with it? -> **KEEP**
 2. **Whitelist Check:** Is the branch the `main/master/default` branch or in the `WHITELIST` (e.g., `develop`, `release`)? -> **KEEP**
 3. **Age Check:** Was the last commit made more than **X days** ago (Default: 180)?
-    * **No:** -> **KEEP**
-    * **Yes:** -> **DELETE** 
+    - **No:** -> **KEEP**
+    - **Yes:** -> **DELETE** 
 
 ### 🛠️ Prerequisites
 
-* Python 3.7+
-* A Bitbucket **Repository Access Token**
+- Python 3.7+
+- A Bitbucket **Repository Access Token**
 
 ### ⚙️ Setup
 
@@ -252,9 +252,8 @@ Click Create Repository Access Token.
 
 Select the following Scopes:
 
-* Pull requests: Read (To check for open PRs)
-
-* Repositories: Read & Write (To read/delete branches)
+- Pull requests: Read (To check for open PRs)
+- Repositories: Read & Write (To read/delete branches)
 
 Copy the token immediately.
 

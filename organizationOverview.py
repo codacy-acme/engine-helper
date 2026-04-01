@@ -1,7 +1,6 @@
 import csv
 import requests
 import json
-import sys
 import time
 from datetime import date
 import argparse
@@ -36,7 +35,7 @@ def getCoverageGrade(provider, organization, apiToken,repository):
     totalIssues=0
     coveragePercentage=None
     grade=None
-    coveragePercentage = None 
+    coveragePercentage = None
     headers = {
                 'content-type': 'application/json',
                 'accept': 'application/json',
@@ -54,7 +53,7 @@ def getCoverageGrade(provider, organization, apiToken,repository):
         else:
             print("getCoverageGrade",repository, response.status_code)
     else:
-            print("getCoverageGrade",repository, response.status_code)
+        print("getCoverageGrade",repository, response.status_code)
     return [coveragePercentage,grade,totalIssues]
 
 def writeReport(provider,organization,repositories,apiToken,today):
@@ -68,12 +67,12 @@ def writeReport(provider,organization,repositories,apiToken,today):
         i+=1
         print(i,"checking",repository['name'])
         repoOverview = getCoverageGrade(provider, organization, apiToken,repository['name'])
-        
+
         patternRow = [repository['name'],repository['lastUpdated'],
-                      repoOverview[0],repoOverview[1],repoOverview[2]] 
+                      repoOverview[0],repoOverview[1],repoOverview[2]]
         writeRepoOverviewTable.writerow(patternRow)
- 
-    repoOverviewTable.close()    
+
+    repoOverviewTable.close()
 
 def main():
     print('\nWelcome to Codacy Integration Helper - A solution to get the Organization Overview\n')
@@ -87,7 +86,7 @@ def main():
 
     args = parser.parse_args()
     
-    startdate = time.time()   
+    startdate = time.time()
 
     today = date.today()
     
