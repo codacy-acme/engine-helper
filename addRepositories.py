@@ -5,7 +5,7 @@ import time
 
 def listRepositoriesfromGithub(orgname, githubToken, githubBaseURL):
     page = 1
-    repositories = []
+    repositoryNames = []
     hasNextPage = True
     headers = {
         'Accept': 'application/vnd.github+json',
@@ -19,12 +19,12 @@ def listRepositoriesfromGithub(orgname, githubToken, githubBaseURL):
 
         if len(repos) > 0:
             for repo in repos:
-                repositories.append(repo['name'])
+                repositoryNames.append(repo['name'])
             page += 1
         else:
             hasNextPage = False
 
-    return repositories
+    return repositoryNames
     
 def addAllRepositories(baseurl,provider, organization, token,githubToken,githubBaseURL,reponame):
     repositories = listRepositoriesfromGithub(organization,githubToken,githubBaseURL)
