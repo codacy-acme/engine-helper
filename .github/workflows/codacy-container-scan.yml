@@ -35,18 +35,18 @@ jobs:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: |
           bash codacy-cli.sh init \
-            -a "${CODACY_API_TOKEN}" \
-            -p gh \
-            -o codacy-acme \
-            -r engine-helper
+            --api-token "${CODACY_API_TOKEN}" \
+            --provider gh \
+            --organization codacy-acme \
+            --repository engine-helper
 
       - name: Generate and upload SBOM to Codacy
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
         run: |
           bash codacy-cli.sh upload-sbom \
-            -a "${CODACY_API_TOKEN}" \
-            -p gh \
-            -o codacy-acme \
-            -r engine-helper \
+            --api-token "${CODACY_API_TOKEN}" \
+            --provider gh \
+            --organization codacy-acme \
+            --repository engine-helper \
             engine-helper:${{ github.sha }}
