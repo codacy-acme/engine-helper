@@ -30,6 +30,16 @@ jobs:
           curl -Ls https://raw.githubusercontent.com/codacy/codacy-cli-v2/main/codacy-cli.sh -o codacy-cli.sh
           bash codacy-cli.sh download
 
+      - name: Initialize Codacy CLI v2
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: |
+          bash codacy-cli.sh init \
+            -a "${CODACY_API_TOKEN}" \
+            -p gh \
+            -o codacy-acme \
+            -r engine-helper
+
       - name: Generate and upload SBOM to Codacy
         env:
           CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
