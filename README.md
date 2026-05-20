@@ -195,7 +195,7 @@ With this script, you'll be able to generate the Organization Overview and get t
 - Repository Last Update Date and Time
 - Coverage Percentage Per Repository
 - Repository Grade
-- Repository Total Issues
+- Repository Total Issues per severity and category
 
 ### Execution
 
