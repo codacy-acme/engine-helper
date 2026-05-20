@@ -125,7 +125,7 @@ def process_single_repo(repo, provider, organization, api_token, session):
     
     return [
         repo_name, repo['lastUpdated'], coverage, grade,
-        severity_counts['Error'], severity_counts['Warning'], severity_counts['Info'], severity_counts['High'], total_issues,
+        severity_counts['Error'], severity_counts['High'], severity_counts['Warning'], severity_counts['Info'], total_issues,
         category_counts['ErrorProne'], category_counts['CodeStyle'], category_counts['Complexity'], 
         category_counts['UnusedCode'], category_counts['Security'], category_counts['Compatibility'], 
         category_counts['Performance'], category_counts['Documentation'], category_counts['BestPractice'], 
@@ -137,7 +137,7 @@ def write_report(provider, organization, repositories, api_token):
     filename = f'{organization}-OrgOverview-{today}.csv'
     
     headers = [
-        'Repository', 'Last Updated', 'Coverage', 'Grade', 'Critical', 'Medium', 'Minor', 'High', 'Total Issues',
+        'Repository', 'Last Updated', 'Coverage', 'Grade', 'Critical', 'High', 'Medium', 'Minor', 'Total Issues',
         'ErrorProne', 'CodeStyle', 'Complexity', 'UnusedCode', 'Security', 'Compatibility', 'Performance', 
         'Documentation', 'BestPractice', 'Comprehensibility', 'Duplication'
     ]
