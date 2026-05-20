@@ -67,8 +67,7 @@ def get_issues_counts(provider, organization, repository, api_token, session):
         data = response.json()
         issues = data.get('data', [])
         
-        # If it 
-        returns an empty list, we have reached the end
+        # If it returns an empty list, we have reached the end
         if not issues:
             break
             
