@@ -13,7 +13,7 @@ def createWebhookAllRepositories(provider, organization, token):
     
     while hasNextPage:
         url = f'https://app.codacy.com/api/v3/organizations/{provider}/{organization}/repositories?{cursor}'
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, timeout=10)
         repositories = json.loads(r.text)
         
         for repository in repositories['data']:
@@ -29,18 +29,18 @@ def createWebhook(provider, organization, repositoryName, token):
         'api-token': token
     }
     url = f'https://app.codacy.com/api/v3/organizations/{provider}/{organization}/repositories/{repositoryName}/integrations/postCommitHook'
-    r = requests.get(url, headers = headers)
+    r = requests.get(url, headers = headers, timeout=10)
 
     print(repositoryName, r.status_code)
 
 def main():
     print('Welcome to Codacy Integration Helper - A temporary solution')
     parser = argparse.ArgumentParser(description='Codacy Integration Helper')
-    parser.add_argument('--apiToken', dest='apiToken', default=None,
+    parser.add_argument('--apiToken', dest='apiToken', required=True,
                         help='the api-token to be used on the REST API')
-    parser.add_argument('--provider', dest='provider', default=None,
+    parser.add_argument('--provider', dest='provider', required=True,
                         help='provider (gh,bb,gl)')
-    parser.add_argument('--organization', dest='organization', default=None,
+    parser.add_argument('--organization', dest='organization', required=True,
                         help='organization name')
 
     args = parser.parse_args()
