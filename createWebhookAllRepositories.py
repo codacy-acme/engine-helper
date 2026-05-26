@@ -12,7 +12,7 @@ def createWebhookAllRepositories(provider, organization, token):
     }
     
     while hasNextPage:
-        url = f'https://app.dev.codacy.org/api/v3/organizations/{provider}/{organization}/repositories?{cursor}'
+        url = f'https://app.codacy.com/api/v3/organizations/{provider}/{organization}/repositories?{cursor}'
         r = requests.get(url, headers=headers)
         repositories = json.loads(r.text)
         
@@ -28,7 +28,7 @@ def createWebhook(provider, organization, repositoryName, token):
         'Accept': 'application/json',
         'api-token': token
     }
-    url = f'https://app.dev.codacy.org/api/v3/organizations/{provider}/{organization}/repositories/{repositoryName}/integrations/postCommitHook'
+    url = f'https://app.codacy.com/api/v3/organizations/{provider}/{organization}/repositories/{repositoryName}/integrations/postCommitHook'
     r = requests.get(url, headers = headers)
 
     print(repositoryName, r.status_code)
