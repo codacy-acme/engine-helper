@@ -309,3 +309,13 @@ WHITELIST = ['develop', 'release', 'master', 'main', 'production']
 ```
 
 Note: the default branch is whitelisted by default
+
+## Script to create the post-commit hook of all repositories from an organization
+
+With this script, you'll be able to create a new post-commit hook (webhook) on the provider
+
+### Execution
+
+```bash
+python3 createWebhookAllRepositories.py --provider {git-provider gh,bb or gl} --organization {organization name} --apiToken {API token on user account}
+```
