@@ -52,9 +52,8 @@ def main():
 
     startdate = time.time()
 
-    target_repositories = None
     if args.which:
-        target_repositories = [repo.strip() for repo in args.which.split(',')]
+        target_repositories = [repo.strip() for repo in args.which.split(',') if repo.strip()]
         for repository in target_repositories:
             createWebhook(args.provider, args.organization, repository, args.apiToken)
     else:
