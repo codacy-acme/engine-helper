@@ -319,3 +319,7 @@ With this script, you'll be able to create a new post-commit hook (webhook) on t
 ```bash
 python3 createWebhookAllRepositories.py --provider {git-provider gh,bb or gl} --organization {organization name} --apiToken {API token on user account}
 ```
+but if you want to run this script for a list of repositories, you can use the flag --which:
+```bash
+python3 createWebhookAllRepositories.py --provider {git-provider gh,bb or gl} --organization {organization name} --apiToken {API token on user account} --which repo1,repo2
+```

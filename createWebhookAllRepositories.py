@@ -42,12 +42,22 @@ def main():
                         help='provider (gh,bb,gl)')
     parser.add_argument('--organization', dest='organization', required=True,
                         help='organization name')
+    parser.add_argument(
+        '--which',
+        dest='which',
+        default=None,
+        help='Comma-separated list of repositories to create webhooks for (default: all)')
 
     args = parser.parse_args()
 
     startdate = time.time()
-    
-    createWebhookAllRepositories(args.provider, args.organization, args.apiToken)
+
+    if args.which:
+        target_repositories = [repo.strip() for repo in args.which.split(',') if repo.strip()]
+        for repository in target_repositories:
+            createWebhook(args.provider, args.organization, repository, args.apiToken)
+    else:
+        createWebhookAllRepositories(args.provider, args.organization, args.apiToken)
 
     enddate = time.time()
     print("\nThe script took ",round(enddate-startdate,2)," seconds")
