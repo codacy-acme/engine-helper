@@ -46,7 +46,7 @@ def main():
         '--which',
         dest='which',
         default=None,
-        help='Comma-separated list of repositories to reintegrate (default: all)')
+        help='Comma-separated list of repositories to create webhooks for (default: all)')
 
     args = parser.parse_args()
 
