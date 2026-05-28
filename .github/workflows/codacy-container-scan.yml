@@ -1,0 +1,52 @@
+name: Codacy Container Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  codacy-container-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t engine-helper:${{ github.sha }} .
+          docker tag engine-helper:${{ github.sha }} engine-helper:latest
+
+      - name: Download Codacy CLI v2
+        run: |
+          curl -Ls https://raw.githubusercontent.com/codacy/codacy-cli-v2/main/codacy-cli.sh -o codacy-cli.sh
+          bash codacy-cli.sh download
+
+      - name: Initialize Codacy CLI v2
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: |
+          bash codacy-cli.sh init \
+            --api-token "${CODACY_API_TOKEN}" \
+            --provider gh \
+            --organization codacy-acme \
+            --repository engine-helper
+
+      - name: Generate and upload SBOM to Codacy
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        run: |
+          bash codacy-cli.sh upload-sbom \
+            --api-token "${CODACY_API_TOKEN}" \
+            --provider gh \
+            --organization codacy-acme \
+            --repository engine-helper \
+            engine-helper:${{ github.sha }}
